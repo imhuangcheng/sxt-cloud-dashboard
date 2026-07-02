@@ -1,0 +1,52 @@
+name: SXT cloud monitor
+
+on:
+  workflow_dispatch:
+    inputs:
+      force_scan:
+        description: "Run the scan even outside configured trading sessions"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+  schedule:
+    - cron: "*/15 1-3,5-7 * * 1-5"
+
+permissions:
+  contents: write
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run monitor
+        env:
+          SERVERCHAN_SEND_KEY: ${{ secrets.SERVERCHAN_SEND_KEY }}
+          SXT_FORCE_SCAN: ${{ github.event.inputs.force_scan || 'false' }}
+        run: python scripts/run.py
+
+      - name: Commit data changes
+        run: |
+          if git diff --quiet -- data/latest_signals.json data/alert_history.json; then
+            echo "No data changes."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/latest_signals.json data/alert_history.json
+          git commit -m "Update SXT monitor data"
+          git push
