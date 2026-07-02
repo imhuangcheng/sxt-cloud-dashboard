@@ -1,0 +1,17 @@
+{
+  "timezone": "Asia/Shanghai",
+  "scan_interval_minutes": 15,
+  "trading_sessions": [
+    ["09:30", "11:30"],
+    ["13:00", "15:00"]
+  ],
+  "enable_serverchan": true,
+  "alert_condition": {
+    "daily_sxt": 2,
+    "minute15_sxt": 2
+  },
+  "data_source": "tencent_or_eastmoney",
+  "dedup_minutes": 240,
+  "min_daily_bars": 80,
+  "min_minute15_bars": 120
+}
