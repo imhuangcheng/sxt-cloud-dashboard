@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SXT 云端双周期监控</title>
+  <style>
+    :root {
+      --bg: #f4f6f8;
+      --panel: #ffffff;
+      --text: #1f2933;
+      --muted: #65758b;
+      --line: #d9e0e8;
+      --green: #16794c;
+      --green-bg: #e7f5ee;
+      --red: #b42318;
+      --red-bg: #fdecec;
+      --blue: #1d4ed8;
+      --blue-bg: #eaf1ff;
+      --gray-bg: #eef2f6;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
+      font-size: 15px;
+      line-height: 1.5;
+    }
+
+    .app {
+      width: min(1160px, calc(100% - 32px));
+      margin: 26px auto;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    h1 {
+      margin: 0 0 5px;
+      font-size: 25px;
+      letter-spacing: 0;
+    }
+
+    .meta {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    input, select, button {
+      height: 36px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #fff;
+      color: var(--text);
+      padding: 0 10px;
+      font: inherit;
+    }
+
+    button {
+      border-color: var(--blue);
+      background: var(--blue);
+      color: #fff;
+      cursor: pointer;
+    }
+
+    .table-wrap {
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: 0 8px 22px rgba(31, 41, 51, 0.06);
+    }
+
+    table {
+      width: 100%;
+      min-width: 880px;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    th {
+      position: sticky;
+      top: 0;
+      background: #f9fafb;
+      color: #394554;
+      font-size: 13px;
+      z-index: 1;
+    }
+
+    tbody tr.alert {
+      background: #fff9e8;
+    }
+
+    tbody tr:hover {
+      background: #f8fbff;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 58px;
+      border-radius: 999px;
+      padding: 3px 9px;
+      font-weight: 700;
+      font-size: 13px;
+    }
+
+    .buy {
+      color: var(--green);
+      background: var(--green-bg);
+    }
+
+    .bad {
+      color: var(--red);
+      background: var(--red-bg);
+    }
+
+    .watch {
+      color: var(--blue);
+      background: var(--blue-bg);
+    }
+
+    .neutral {
+      color: var(--muted);
+      background: var(--gray-bg);
+    }
+
+    .empty {
+      padding: 28px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    @media (max-width: 760px) {
+      .topbar {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .controls {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      input, select, button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div>
+        <h1>SXT 云端双周期监控</h1>
+        <div class="meta">最后扫描：<span id="updatedAt">-</span>　<span id="message"></span></div>
+      </div>
+      <div class="controls">
+        <input id="searchInput" type="search" placeholder="输入代码或名称筛选">
+        <select id="statusFilter" aria-label="状态筛选">
+          <option value="">全部状态</option>
+          <option value="ALERT">双周期信号</option>
+          <option value="WATCH">观察</option>
+          <option value="ERROR">异常</option>
+          <option value="UNSUPPORTED">暂不支持</option>
+        </select>
+        <button id="refreshButton" type="button">刷新</button>
+      </div>
+    </header>
+
+    <section class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>股票代码</th>
+            <th>股票名称</th>
+            <th>日K SXT</th>
+            <th>15分钟 SXT</th>
+            <th>状态</th>
+            <th>日K时间</th>
+            <th>15分钟时间</th>
+            <th>说明</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+      <div id="emptyState" class="empty" hidden>暂无数据</div>
+    </section>
+  </main>
+
+  <script>
+    const DATA_URL = "../data/latest_signals.json";
+    const REFRESH_MS = 60000;
+    let rows = [];
+
+    const updatedAt = document.getElementById("updatedAt");
+    const message = document.getElementById("message");
+    const tableBody = document.getElementById("tableBody");
+    const emptyState = document.getElementById("emptyState");
+    const searchInput = document.getElementById("searchInput");
+    const statusFilter = document.getElementById("statusFilter");
+    const refreshButton = document.getElementById("refreshButton");
+
+    function badgeClass(value, status) {
+      if (status === "ALERT" || value === 2) return "buy";
+      if (status === "ERROR") return "bad";
+      if (status === "WATCH") return "watch";
+      return "neutral";
+    }
+
+    function formatValue(value) {
+      return value === null || value === undefined ? "-" : value;
+    }
+
+    function render() {
+      const keyword = searchInput.value.trim().toLowerCase();
+      const status = statusFilter.value;
+      const filtered = rows.filter((row) => {
+        const hitKeyword = !keyword
+          || String(row.code || "").toLowerCase().includes(keyword)
+          || String(row.name || "").toLowerCase().includes(keyword);
+        const hitStatus = !status || row.status === status;
+        return hitKeyword && hitStatus;
+      });
+
+      tableBody.innerHTML = "";
+      emptyState.hidden = filtered.length > 0;
+
+      for (const row of filtered) {
+        const tr = document.createElement("tr");
+        if (row.status === "ALERT") tr.classList.add("alert");
+        tr.innerHTML = `
+          <td>${row.code || "-"}</td>
+          <td>${row.name || "-"}</td>
+          <td><span class="badge ${badgeClass(row.daily_sxt, row.status)}">${formatValue(row.daily_sxt)}</span></td>
+          <td><span class="badge ${badgeClass(row.minute15_sxt, row.status)}">${formatValue(row.minute15_sxt)}</span></td>
+          <td><span class="badge ${badgeClass(null, row.status)}">${row.status || "-"}</span></td>
+          <td>${row.last_daily_time || "-"}</td>
+          <td>${row.last_15m_time || "-"}</td>
+          <td>${row.error || ""}</td>
+        `;
+        tableBody.appendChild(tr);
+      }
+    }
+
+    async function loadData() {
+      refreshButton.disabled = true;
+      try {
+        const response = await fetch(`${DATA_URL}?t=${Date.now()}`, { cache: "no-store" });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const payload = await response.json();
+        rows = Array.isArray(payload.items) ? payload.items : [];
+        updatedAt.textContent = payload.updated_at || "-";
+        message.textContent = payload.message || "";
+        render();
+      } catch (error) {
+        rows = [];
+        updatedAt.textContent = "-";
+        message.textContent = `读取数据失败：${error.message}`;
+        render();
+      } finally {
+        refreshButton.disabled = false;
+      }
+    }
+
+    searchInput.addEventListener("input", render);
+    statusFilter.addEventListener("change", render);
+    refreshButton.addEventListener("click", loadData);
+    loadData();
+    window.setInterval(loadData, REFRESH_MS);
+  </script>
+</body>
+</html>
