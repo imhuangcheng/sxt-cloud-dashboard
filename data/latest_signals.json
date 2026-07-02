@@ -1,0 +1,47 @@
+{
+  "updated_at": "2026-07-02 21:04:39",
+  "is_trading_time": false,
+  "force_scan": true,
+  "message": "Scan completed.",
+  "items": [
+    {
+      "code": "300607",
+      "name": "拓斯达",
+      "market": "sz",
+      "daily_sxt": 2,
+      "minute15_sxt": 2,
+      "status": "ALERT",
+      "last_daily_time": "2026-07-02 00:00:00",
+      "last_15m_time": "2026-07-02 15:00:00",
+      "error": "",
+      "daily_signal": "BUY",
+      "minute15_signal": "BUY"
+    },
+    {
+      "code": "300219",
+      "name": "鸿利智汇",
+      "market": "sz",
+      "daily_sxt": -2,
+      "minute15_sxt": 0,
+      "status": "WATCH",
+      "last_daily_time": "2026-07-02 00:00:00",
+      "last_15m_time": "2026-07-02 15:00:00",
+      "error": "",
+      "daily_signal": "NEGATIVE",
+      "minute15_signal": "NEUTRAL"
+    },
+    {
+      "code": "600519",
+      "name": "贵州茅台",
+      "market": "sh",
+      "daily_sxt": 0,
+      "minute15_sxt": -2,
+      "status": "WATCH",
+      "last_daily_time": "2026-07-02 00:00:00",
+      "last_15m_time": "2026-07-02 15:00:00",
+      "error": "",
+      "daily_signal": "NEUTRAL",
+      "minute15_signal": "NEGATIVE"
+    }
+  ]
+}
