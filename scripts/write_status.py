@@ -1,0 +1,76 @@
+from __future__ import annotations
+
+import json
+import os
+from datetime import datetime, timedelta
+from pathlib import Path
+from typing import Any
+from zoneinfo import ZoneInfo
+
+
+ROOT = Path(__file__).resolve().parents[1]
+CONFIG_DIR = ROOT / "config"
+DATA_DIR = ROOT / "data"
+VERSION = "v1.1.0"
+
+
+def load_json(path: Path, default: Any) -> Any:
+    if not path.exists():
+        return default
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def write_json(path: Path, payload: Any) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
+def watchlist_count(path: Path) -> int:
+    payload = load_json(path, {"watchlist": []})
+    if isinstance(payload, dict):
+        values = payload.get("watchlist", [])
+        return len(values) if isinstance(values, list) else 0
+    if isinstance(payload, list):
+        return len(payload)
+    return 0
+
+
+def next_scan_time(now: datetime, interval_minutes: int) -> str:
+    interval = max(interval_minutes, 1)
+    minute = ((now.minute // interval) + 1) * interval
+    next_time = now.replace(second=0, microsecond=0)
+    if minute >= 60:
+        next_time = next_time.replace(minute=0) + timedelta(hours=1)
+    else:
+        next_time = next_time.replace(minute=minute)
+    return next_time.strftime("%Y-%m-%d %H:%M:%S")
+
+
+def main() -> int:
+    config = load_json(CONFIG_DIR / "config.json", {})
+    timezone = ZoneInfo(config.get("timezone", "Asia/Shanghai"))
+    now = datetime.now(timezone).replace(tzinfo=None)
+    latest = load_json(DATA_DIR / "latest_signals.json", {"items": []})
+    items = latest.get("items", []) if isinstance(latest, dict) else []
+    error = os.getenv("SXT_STATUS_ERROR", "GitHub Actions monitor step failed.").strip()
+
+    write_json(
+        DATA_DIR / "status.json",
+        {
+            "status": "error",
+            "last_scan": now.strftime("%Y-%m-%d %H:%M:%S"),
+            "next_scan": next_scan_time(now, int(config.get("scan_interval_minutes", 15))),
+            "stocks": watchlist_count(CONFIG_DIR / "watchlist.json"),
+            "signals": sum(1 for item in items if item.get("status") == "ALERT"),
+            "duration_seconds": 0,
+            "last_error": error[:300],
+            "workflow": "failed",
+            "data_source": str(config.get("data_source", "tencent_or_eastmoney")),
+            "version": VERSION,
+        },
+    )
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

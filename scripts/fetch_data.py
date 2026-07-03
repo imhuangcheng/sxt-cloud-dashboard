@@ -41,10 +41,15 @@ class Stock:
         return self.name or "-"
 
 
-def normalize_stock(raw: dict[str, Any]) -> Stock:
-    code = str(raw.get("code", "")).strip()
-    name = str(raw.get("name", "") or "").strip()
-    market = str(raw.get("market", "") or "").strip().lower()
+def normalize_stock(raw: dict[str, Any] | str) -> Stock:
+    if isinstance(raw, str):
+        code = raw.strip()
+        name = ""
+        market = ""
+    else:
+        code = str(raw.get("code", "")).strip()
+        name = str(raw.get("name", "") or "").strip()
+        market = str(raw.get("market", "") or "").strip().lower()
 
     if not code:
         return Stock(code="", name=name, market=market, supported=False, reason="missing code")

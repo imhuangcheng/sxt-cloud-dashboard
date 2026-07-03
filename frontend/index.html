@@ -81,6 +81,127 @@
       cursor: pointer;
     }
 
+    button.secondary {
+      border-color: var(--line);
+      background: #fff;
+      color: var(--text);
+    }
+
+    button.danger {
+      border-color: var(--red);
+      background: var(--red);
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.62;
+    }
+
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.95fr);
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: 0 8px 22px rgba(31, 41, 51, 0.06);
+    }
+
+    .panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .panel-title {
+      margin: 0;
+      font-size: 16px;
+    }
+
+    .panel-body {
+      padding: 16px;
+    }
+
+    .status-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px 18px;
+    }
+
+    .status-item {
+      min-width: 0;
+    }
+
+    .status-label {
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 3px;
+    }
+
+    .status-value {
+      overflow-wrap: anywhere;
+      font-weight: 700;
+    }
+
+    .status-message,
+    .watchlist-message {
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 12px;
+    }
+
+    .status-message.error,
+    .watchlist-message.error {
+      color: var(--red);
+    }
+
+    .watchlist-form {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .watchlist-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      min-height: 34px;
+      margin-bottom: 12px;
+    }
+
+    .watchlist-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #f9fafb;
+      padding: 4px 6px 4px 10px;
+      font-weight: 700;
+    }
+
+    .watchlist-chip button {
+      width: 24px;
+      height: 24px;
+      border: 0;
+      border-radius: 999px;
+      background: transparent;
+      color: var(--red);
+      padding: 0;
+      line-height: 1;
+    }
+
+    .clickable-row {
+      cursor: pointer;
+    }
+
     .table-wrap {
       overflow: auto;
       border: 1px solid var(--line);
@@ -167,6 +288,18 @@
         flex-direction: column;
       }
 
+      .dashboard-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .status-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .watchlist-form {
+        flex-direction: column;
+      }
+
       input, select, button {
         width: 100%;
       }
@@ -193,6 +326,60 @@
       </div>
     </header>
 
+    <section class="dashboard-grid" aria-label="云端监控概览">
+      <div class="panel">
+        <div class="panel-head">
+          <h2 class="panel-title">云端运行状态</h2>
+          <span class="badge neutral" id="workflowBadge">-</span>
+        </div>
+        <div class="panel-body">
+          <div class="status-grid">
+            <div class="status-item">
+              <div class="status-label">运行状态</div>
+              <div class="status-value" id="cloudStatus">-</div>
+            </div>
+            <div class="status-item">
+              <div class="status-label">最近扫描时间</div>
+              <div class="status-value" id="lastScan">-</div>
+            </div>
+            <div class="status-item">
+              <div class="status-label">下次扫描时间</div>
+              <div class="status-value" id="nextScan">-</div>
+            </div>
+            <div class="status-item">
+              <div class="status-label">扫描股票数</div>
+              <div class="status-value" id="stockCount">-</div>
+            </div>
+            <div class="status-item">
+              <div class="status-label">本次信号数量</div>
+              <div class="status-value" id="signalCount">-</div>
+            </div>
+            <div class="status-item">
+              <div class="status-label">运行耗时</div>
+              <div class="status-value" id="durationSeconds">-</div>
+            </div>
+          </div>
+          <div class="status-message" id="statusMessage"></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <h2 class="panel-title">股票池管理</h2>
+          <span class="meta" id="watchlistCount">0 只</span>
+        </div>
+        <div class="panel-body">
+          <div class="watchlist-form">
+            <input id="watchlistInput" type="text" inputmode="numeric" maxlength="6" placeholder="输入 6 位股票代码">
+            <button id="addWatchlistButton" type="button">新增</button>
+            <button class="secondary" id="saveWatchlistButton" type="button">保存</button>
+          </div>
+          <div class="watchlist-list" id="watchlistList"></div>
+          <div class="watchlist-message" id="watchlistMessage"></div>
+        </div>
+      </div>
+    </section>
+
     <section class="table-wrap">
       <table>
         <thead>
@@ -215,8 +402,14 @@
 
   <script>
     const DATA_URL = "../data/latest_signals.json";
+    const STATUS_URL = "../data/status.json";
+    const WATCHLIST_API = "/.netlify/functions/watchlist";
+    const WATCHLIST_FALLBACK_URL = "../config/watchlist.json";
+    const SXT_DETAIL_URL = "https://sxt-dual-period-dashboard.netlify.app/";
     const REFRESH_MS = 60000;
+    const STATUS_REFRESH_MS = 30000;
     let rows = [];
+    let watchlist = [];
 
     const updatedAt = document.getElementById("updatedAt");
     const message = document.getElementById("message");
@@ -225,6 +418,20 @@
     const searchInput = document.getElementById("searchInput");
     const statusFilter = document.getElementById("statusFilter");
     const refreshButton = document.getElementById("refreshButton");
+    const workflowBadge = document.getElementById("workflowBadge");
+    const cloudStatus = document.getElementById("cloudStatus");
+    const lastScan = document.getElementById("lastScan");
+    const nextScan = document.getElementById("nextScan");
+    const stockCount = document.getElementById("stockCount");
+    const signalCount = document.getElementById("signalCount");
+    const durationSeconds = document.getElementById("durationSeconds");
+    const statusMessage = document.getElementById("statusMessage");
+    const watchlistInput = document.getElementById("watchlistInput");
+    const addWatchlistButton = document.getElementById("addWatchlistButton");
+    const saveWatchlistButton = document.getElementById("saveWatchlistButton");
+    const watchlistList = document.getElementById("watchlistList");
+    const watchlistCount = document.getElementById("watchlistCount");
+    const watchlistMessage = document.getElementById("watchlistMessage");
 
     function badgeClass(value, status) {
       if (status === "ALERT" || value === 2) return "buy";
@@ -235,6 +442,24 @@
 
     function formatValue(value) {
       return value === null || value === undefined ? "-" : value;
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "").replace(/[&<>"']/g, (char) => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;",
+      }[char]));
+    }
+
+    function stockCode(row) {
+      return String(row.code || row.symbol || row.stock_code || "").trim();
+    }
+
+    function normalizeCodes(codes) {
+      return [...new Set(codes.map((code) => String(code).trim()).filter(Boolean))].sort();
     }
 
     function render() {
@@ -252,19 +477,147 @@
       emptyState.hidden = filtered.length > 0;
 
       for (const row of filtered) {
+        const code = stockCode(row);
         const tr = document.createElement("tr");
         if (row.status === "ALERT") tr.classList.add("alert");
+        if (/^\d{6}$/.test(code)) {
+          tr.classList.add("clickable-row");
+          tr.title = "打开 SXT 双周期项目";
+          tr.addEventListener("click", () => {
+            window.open(`${SXT_DETAIL_URL}?code=${encodeURIComponent(code)}`, "_blank", "noopener");
+          });
+        }
         tr.innerHTML = `
-          <td>${row.code || "-"}</td>
-          <td>${row.name || "-"}</td>
+          <td>${escapeHtml(code || "-")}</td>
+          <td>${escapeHtml(row.name || "-")}</td>
           <td><span class="badge ${badgeClass(row.daily_sxt, row.status)}">${formatValue(row.daily_sxt)}</span></td>
           <td><span class="badge ${badgeClass(row.minute15_sxt, row.status)}">${formatValue(row.minute15_sxt)}</span></td>
-          <td><span class="badge ${badgeClass(null, row.status)}">${row.status || "-"}</span></td>
-          <td>${row.last_daily_time || "-"}</td>
-          <td>${row.last_15m_time || "-"}</td>
-          <td>${row.error || ""}</td>
+          <td><span class="badge ${badgeClass(null, row.status)}">${escapeHtml(row.status || "-")}</span></td>
+          <td>${escapeHtml(row.last_daily_time || "-")}</td>
+          <td>${escapeHtml(row.last_15m_time || "-")}</td>
+          <td>${escapeHtml(row.error || "")}</td>
         `;
         tableBody.appendChild(tr);
+      }
+    }
+
+    function renderStatus(payload) {
+      workflowBadge.textContent = payload.workflow || "-";
+      workflowBadge.className = `badge ${payload.workflow === "failed" ? "bad" : "buy"}`;
+      cloudStatus.textContent = payload.status || "-";
+      lastScan.textContent = payload.last_scan || "-";
+      nextScan.textContent = payload.next_scan || "-";
+      stockCount.textContent = formatValue(payload.stocks);
+      signalCount.textContent = formatValue(payload.signals);
+      durationSeconds.textContent = payload.duration_seconds === undefined ? "-" : `${payload.duration_seconds}s`;
+      statusMessage.className = `status-message ${payload.last_error ? "error" : ""}`;
+      statusMessage.textContent = payload.last_error || `数据源：${payload.data_source || "-"}　版本：${payload.version || "-"}`;
+    }
+
+    async function loadStatus() {
+      try {
+        const response = await fetch(`${STATUS_URL}?t=${Date.now()}`, { cache: "no-store" });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        renderStatus(await response.json());
+      } catch (error) {
+        workflowBadge.textContent = "-";
+        workflowBadge.className = "badge neutral";
+        cloudStatus.textContent = "-";
+        lastScan.textContent = "-";
+        nextScan.textContent = "-";
+        stockCount.textContent = "-";
+        signalCount.textContent = "-";
+        durationSeconds.textContent = "-";
+        statusMessage.className = "status-message error";
+        statusMessage.textContent = "暂无云端状态数据，请检查 GitHub Actions 是否已运行。";
+      }
+    }
+
+    function setWatchlistMessage(text, isError = false) {
+      watchlistMessage.textContent = text;
+      watchlistMessage.className = `watchlist-message ${isError ? "error" : ""}`;
+    }
+
+    function renderWatchlist() {
+      watchlistList.innerHTML = "";
+      watchlistCount.textContent = `${watchlist.length} 只`;
+      for (const code of watchlist) {
+        const chip = document.createElement("span");
+        chip.className = "watchlist-chip";
+        chip.innerHTML = `<span>${escapeHtml(code)}</span>`;
+        const removeButton = document.createElement("button");
+        removeButton.type = "button";
+        removeButton.textContent = "×";
+        removeButton.setAttribute("aria-label", `删除 ${code}`);
+        removeButton.addEventListener("click", () => {
+          watchlist = watchlist.filter((item) => item !== code);
+          renderWatchlist();
+          setWatchlistMessage("股票池已修改，请保存。");
+        });
+        chip.appendChild(removeButton);
+        watchlistList.appendChild(chip);
+      }
+    }
+
+    function readWatchlistPayload(payload) {
+      const values = Array.isArray(payload.watchlist) ? payload.watchlist : payload;
+      return normalizeCodes(Array.isArray(values) ? values.map((item) => {
+        if (typeof item === "string") return item;
+        return item && (item.code || item.symbol || item.stock_code);
+      }) : []);
+    }
+
+    async function loadWatchlist() {
+      try {
+        let response = await fetch(`${WATCHLIST_API}?t=${Date.now()}`, { cache: "no-store" });
+        if (!response.ok) {
+          response = await fetch(`${WATCHLIST_FALLBACK_URL}?t=${Date.now()}`, { cache: "no-store" });
+        }
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        watchlist = readWatchlistPayload(await response.json());
+        renderWatchlist();
+        setWatchlistMessage("股票池已读取。");
+      } catch (error) {
+        watchlist = [];
+        renderWatchlist();
+        setWatchlistMessage(`读取股票池失败：${error.message}`, true);
+      }
+    }
+
+    function addWatchlistCode() {
+      const code = watchlistInput.value.trim();
+      if (!/^\d{6}$/.test(code)) {
+        setWatchlistMessage("请输入 6 位数字股票代码。", true);
+        return;
+      }
+      watchlist = normalizeCodes([...watchlist, code]);
+      watchlistInput.value = "";
+      renderWatchlist();
+      setWatchlistMessage("股票池已修改，请保存。");
+    }
+
+    async function saveWatchlist() {
+      const next = normalizeCodes(watchlist);
+      if (next.length === 0) {
+        setWatchlistMessage("股票池不能为空。", true);
+        return;
+      }
+      saveWatchlistButton.disabled = true;
+      try {
+        const response = await fetch(WATCHLIST_API, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ watchlist: next }),
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(payload.error || `HTTP ${response.status}`);
+        watchlist = readWatchlistPayload(payload);
+        renderWatchlist();
+        setWatchlistMessage(payload.message || "保存成功，云端监控将在下一次扫描时自动读取新股票池");
+      } catch (error) {
+        setWatchlistMessage(`保存失败：${error.message}`, true);
+      } finally {
+        saveWatchlistButton.disabled = false;
       }
     }
 
@@ -291,8 +644,16 @@
     searchInput.addEventListener("input", render);
     statusFilter.addEventListener("change", render);
     refreshButton.addEventListener("click", loadData);
+    addWatchlistButton.addEventListener("click", addWatchlistCode);
+    saveWatchlistButton.addEventListener("click", saveWatchlist);
+    watchlistInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") addWatchlistCode();
+    });
     loadData();
+    loadStatus();
+    loadWatchlist();
     window.setInterval(loadData, REFRESH_MS);
+    window.setInterval(loadStatus, STATUS_REFRESH_MS);
   </script>
 </body>
 </html>

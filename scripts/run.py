@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import logging
 import os
-from datetime import datetime, time
+from datetime import datetime, timedelta, time
 from pathlib import Path
 from typing import Any
 from zoneinfo import ZoneInfo
@@ -24,6 +24,7 @@ ROOT = Path(__file__).resolve().parents[1]
 CONFIG_DIR = ROOT / "config"
 DATA_DIR = ROOT / "data"
 LOGGER = logging.getLogger("sxt-cloud-monitor")
+VERSION = "v1.1.0"
 
 
 def load_json(path: Path, default: Any) -> Any:
@@ -37,6 +38,16 @@ def write_json(path: Path, payload: Any) -> None:
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
+def load_watchlist(path: Path) -> list[Any]:
+    payload = load_json(path, {"watchlist": []})
+    if isinstance(payload, dict):
+        values = payload.get("watchlist", [])
+        return values if isinstance(values, list) else []
+    if isinstance(payload, list):
+        return payload
+    return []
+
+
 def parse_hhmm(value: str) -> time:
     hour, minute = value.split(":", 1)
     return time(int(hour), int(minute))
@@ -47,6 +58,41 @@ def is_trading_time(now: datetime, sessions: list[list[str]]) -> bool:
         return False
     current = now.time()
     return any(parse_hhmm(start) <= current <= parse_hhmm(end) for start, end in sessions)
+
+
+def next_scan_time(now: datetime, interval_minutes: int) -> str:
+    interval = max(interval_minutes, 1)
+    minute = ((now.minute // interval) + 1) * interval
+    next_time = now.replace(second=0, microsecond=0)
+    if minute >= 60:
+        next_time = next_time.replace(minute=0) + timedelta(hours=1)
+    else:
+        next_time = next_time.replace(minute=minute)
+    return next_time.strftime("%Y-%m-%d %H:%M:%S")
+
+
+def build_status_payload(
+    *,
+    now: datetime,
+    config: dict[str, Any],
+    watchlist: list[Any],
+    signals: int = 0,
+    duration_seconds: float = 0,
+    last_error: str = "",
+    workflow: str = "success",
+) -> dict[str, Any]:
+    return {
+        "status": "running" if workflow == "success" else "error",
+        "last_scan": now.strftime("%Y-%m-%d %H:%M:%S"),
+        "next_scan": next_scan_time(now, int(config.get("scan_interval_minutes", 15))),
+        "stocks": len(watchlist),
+        "signals": signals,
+        "duration_seconds": round(duration_seconds, 2),
+        "last_error": last_error,
+        "workflow": workflow,
+        "data_source": str(config.get("data_source", "tencent_or_eastmoney")),
+        "version": VERSION,
+    }
 
 
 def status_for(daily_sxt: int | None, minute15_sxt: int | None, target_daily: int, target_15m: int) -> str:
@@ -67,12 +113,14 @@ def build_non_trading_payload(now: datetime, previous: dict[str, Any]) -> dict[s
 
 
 def main() -> int:
+    started_at = datetime.now()
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     config = load_json(CONFIG_DIR / "config.json", {})
-    watchlist = load_json(CONFIG_DIR / "watchlist.json", [])
+    watchlist = load_watchlist(CONFIG_DIR / "watchlist.json")
     timezone = ZoneInfo(config.get("timezone", "Asia/Shanghai"))
     now = datetime.now(timezone).replace(tzinfo=None)
     latest_path = DATA_DIR / "latest_signals.json"
+    status_path = DATA_DIR / "status.json"
     history_path = DATA_DIR / "alert_history.json"
     previous_latest = load_json(latest_path, {"items": []})
     force_scan = os.getenv("SXT_FORCE_SCAN", "").strip().lower() in {"1", "true", "yes"}
@@ -80,6 +128,16 @@ def main() -> int:
     if not force_scan and not is_trading_time(now, config.get("trading_sessions", [])):
         LOGGER.info("outside trading sessions, skip scan")
         write_json(latest_path, build_non_trading_payload(now, previous_latest))
+        write_json(
+            status_path,
+            build_status_payload(
+                now=now,
+                config=config,
+                watchlist=watchlist,
+                signals=sum(1 for item in previous_latest.get("items", []) if item.get("status") == "ALERT"),
+                duration_seconds=(datetime.now() - started_at).total_seconds(),
+            ),
+        )
         return 0
     if force_scan:
         LOGGER.info("SXT_FORCE_SCAN is enabled, running outside normal trading-time guard")
@@ -164,6 +222,17 @@ def main() -> int:
     }
     write_json(latest_path, payload)
     save_alert_history(history_path, history)
+    write_json(
+        status_path,
+        build_status_payload(
+            now=now,
+            config=config,
+            watchlist=watchlist,
+            signals=sum(1 for item in items if item.get("status") == "ALERT"),
+            duration_seconds=(datetime.now() - started_at).total_seconds(),
+            last_error="; ".join(item.get("error", "") for item in items if item.get("status") == "ERROR")[:300],
+        ),
+    )
     LOGGER.info("scan completed items=%s", len(items))
     return 0
 
