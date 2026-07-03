@@ -405,7 +405,8 @@
     const STATUS_URL = "../data/status.json";
     const WATCHLIST_API = "/.netlify/functions/watchlist";
     const WATCHLIST_FALLBACK_URL = "../config/watchlist.json";
-    const SXT_DETAIL_URL = "https://sxt-dual-period-dashboard.netlify.app/";
+    const REFRESH_API = "/.netlify/functions/refresh";
+    const MONITOR_DETAIL_URL = "https://hc-dual-period-monitor.netlify.app/";
     const REFRESH_MS = 60000;
     const STATUS_REFRESH_MS = 30000;
     let rows = [];
@@ -462,6 +463,25 @@
       return [...new Set(codes.map((code) => String(code).trim()).filter(Boolean))].sort();
     }
 
+    function mergeWatchlistRows() {
+      const existing = new Map(rows.map((row) => [stockCode(row), row]));
+      const merged = [];
+      for (const code of watchlist) {
+        merged.push(existing.get(code) || {
+          code,
+          name: "",
+          daily_sxt: null,
+          minute15_sxt: null,
+          status: "NO_DATA",
+          last_daily_time: "",
+          last_15m_time: "",
+          error: "等待云端扫描",
+        });
+        existing.delete(code);
+      }
+      rows = [...merged, ...existing.values()];
+    }
+
     function render() {
       const keyword = searchInput.value.trim().toLowerCase();
       const status = statusFilter.value;
@@ -482,9 +502,11 @@
         if (row.status === "ALERT") tr.classList.add("alert");
         if (/^\d{6}$/.test(code)) {
           tr.classList.add("clickable-row");
-          tr.title = "打开 SXT 双周期项目";
+          tr.title = "打开 HC Monitor 项目";
           tr.addEventListener("click", () => {
-            window.open(`${SXT_DETAIL_URL}?code=${encodeURIComponent(code)}`, "_blank", "noopener");
+            const url = new URL(MONITOR_DETAIL_URL);
+            url.searchParams.set("code", code);
+            window.open(url.toString(), "_blank", "noopener");
           });
         }
         tr.innerHTML = `
@@ -575,11 +597,15 @@
         }
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         watchlist = readWatchlistPayload(await response.json());
+        mergeWatchlistRows();
         renderWatchlist();
+        render();
         setWatchlistMessage("股票池已读取。");
       } catch (error) {
         watchlist = [];
+        mergeWatchlistRows();
         renderWatchlist();
+        render();
         setWatchlistMessage(`读取股票池失败：${error.message}`, true);
       }
     }
@@ -592,7 +618,9 @@
       }
       watchlist = normalizeCodes([...watchlist, code]);
       watchlistInput.value = "";
+      mergeWatchlistRows();
       renderWatchlist();
+      render();
       setWatchlistMessage("股票池已修改，请保存。");
     }
 
@@ -612,7 +640,9 @@
         const payload = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(payload.error || `HTTP ${response.status}`);
         watchlist = readWatchlistPayload(payload);
+        mergeWatchlistRows();
         renderWatchlist();
+        render();
         setWatchlistMessage(payload.message || "保存成功，云端监控将在下一次扫描时自动读取新股票池");
       } catch (error) {
         setWatchlistMessage(`保存失败：${error.message}`, true);
@@ -621,38 +651,77 @@
       }
     }
 
+    async function triggerCloudScan() {
+      const response = await fetch(REFRESH_API, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ force_scan: true }),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.error || `HTTP ${response.status}`);
+      return payload;
+    }
+
     async function loadData() {
-      refreshButton.disabled = true;
       try {
         const response = await fetch(`${DATA_URL}?t=${Date.now()}`, { cache: "no-store" });
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const payload = await response.json();
         rows = Array.isArray(payload.items) ? payload.items : [];
+        mergeWatchlistRows();
         updatedAt.textContent = payload.updated_at || "-";
         message.textContent = payload.message || "";
         render();
       } catch (error) {
         rows = [];
+        mergeWatchlistRows();
         updatedAt.textContent = "-";
         message.textContent = `读取数据失败：${error.message}`;
         render();
+      }
+    }
+
+    async function refreshAll({ triggerScan = false } = {}) {
+      refreshButton.disabled = true;
+      const originalText = refreshButton.textContent;
+      refreshButton.textContent = triggerScan ? "刷新中" : originalText;
+      try {
+        let livePayload = null;
+        if (triggerScan) {
+          try {
+            const payload = await triggerCloudScan();
+            if (Array.isArray(payload.items)) livePayload = payload;
+            message.textContent = payload.message || "已触发云端扫描，结果生成后会自动刷新。";
+          } catch (error) {
+            message.textContent = `触发扫描失败，已改为读取现有数据：${error.message}`;
+          }
+        }
+        await Promise.all([loadStatus(), loadWatchlist()]);
+        if (livePayload) {
+          rows = livePayload.items;
+          mergeWatchlistRows();
+          updatedAt.textContent = livePayload.updated_at || "-";
+          message.textContent = livePayload.message || "实时刷新完成。";
+          render();
+        } else {
+          await loadData();
+        }
       } finally {
         refreshButton.disabled = false;
+        refreshButton.textContent = originalText;
       }
     }
 
     searchInput.addEventListener("input", render);
     statusFilter.addEventListener("change", render);
-    refreshButton.addEventListener("click", loadData);
+    refreshButton.addEventListener("click", () => refreshAll({ triggerScan: true }));
     addWatchlistButton.addEventListener("click", addWatchlistCode);
     saveWatchlistButton.addEventListener("click", saveWatchlist);
     watchlistInput.addEventListener("keydown", (event) => {
       if (event.key === "Enter") addWatchlistCode();
     });
-    loadData();
-    loadStatus();
-    loadWatchlist();
-    window.setInterval(loadData, REFRESH_MS);
+    refreshAll();
+    window.setInterval(() => refreshAll(), REFRESH_MS);
     window.setInterval(loadStatus, STATUS_REFRESH_MS);
   </script>
 </body>
