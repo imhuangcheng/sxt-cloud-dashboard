@@ -9,7 +9,7 @@ from typing import Any
 from zoneinfo import ZoneInfo
 
 from calc_sxt import calculate_sxt
-from fetch_data import fetch_15m, fetch_daily, normalize_stock
+from fetch_data import fetch_15m, fetch_daily, fetch_stock_name, normalize_stock
 from notifier import (
     load_alert_history,
     notify_signal,
@@ -155,9 +155,10 @@ def main() -> int:
     items: list[dict[str, Any]] = []
     for raw_stock in watchlist:
         stock = normalize_stock(raw_stock)
+        stock_name = fetch_stock_name(stock)
         item: dict[str, Any] = {
             "code": stock.code,
-            "name": stock.name,
+            "name": stock_name,
             "market": stock.market,
             "daily_sxt": None,
             "minute15_sxt": None,

@@ -1,5 +1,6 @@
 const WATCHLIST_PATH = "config/watchlist.json";
 const SXT_API = "https://sxt-dual-period-dashboard.netlify.app/.netlify/functions/sxt";
+const EASTMONEY_QUOTE_API = "https://push2.eastmoney.com/api/qt/stock/get";
 
 function json(statusCode, body) {
   return {
@@ -68,12 +69,36 @@ function statusFor(dailySxt, minute15Sxt) {
   return Number(dailySxt) === 2 && Number(minute15Sxt) === 2 ? "ALERT" : "WATCH";
 }
 
+function secidForCode(code) {
+  return /^(6|9)/.test(code) ? `1.${code}` : `0.${code}`;
+}
+
 async function loadWatchlist() {
   const response = await githubRequest(WATCHLIST_PATH);
   if (!response.ok) {
     throw new Error(response.payload.error || response.payload.message || "watchlist read failed");
   }
   return normalizeWatchlist(decodeJsonContent(response.payload.content));
+}
+
+async function fetchStockName(code) {
+  try {
+    const url = new URL(EASTMONEY_QUOTE_API);
+    url.searchParams.set("secid", secidForCode(code));
+    url.searchParams.set("fields", "f58");
+    const response = await fetch(url, {
+      cache: "no-store",
+      headers: {
+        "user-agent": "Mozilla/5.0",
+        "referer": "https://quote.eastmoney.com/",
+      },
+    });
+    const payload = await response.json().catch(() => ({}));
+    const name = String(payload?.data?.f58 || "").trim();
+    return name === "-" ? "" : name;
+  } catch {
+    return "";
+  }
 }
 
 async function querySxt(code) {
@@ -83,9 +108,10 @@ async function querySxt(code) {
   if (!response.ok) throw new Error(payload.error || `HTTP ${response.status}`);
   const dailySxt = payload.daily_sxt ?? null;
   const minute15Sxt = payload.m15_sxt ?? payload.minute15_sxt ?? null;
+  const name = payload.name || await fetchStockName(code);
   return {
     code,
-    name: payload.name || "",
+    name,
     market: /^(6|9)/.test(code) ? "sh" : "sz",
     daily_sxt: dailySxt,
     minute15_sxt: minute15Sxt,
@@ -101,12 +127,13 @@ async function querySxt(code) {
 async function scanWatchlist() {
   const watchlist = await loadWatchlist();
   const results = await Promise.allSettled(watchlist.map((code) => querySxt(code)));
-  return watchlist.map((code, index) => {
+  return Promise.all(watchlist.map(async (code, index) => {
     const result = results[index];
     if (result.status === "fulfilled") return result.value;
+    const name = await fetchStockName(code);
     return {
       code,
-      name: "",
+      name,
       market: /^(6|9)/.test(code) ? "sh" : "sz",
       daily_sxt: null,
       minute15_sxt: null,
@@ -117,7 +144,7 @@ async function scanWatchlist() {
       daily_signal: "",
       minute15_signal: "",
     };
-  });
+  }));
 }
 
 exports.handler = async (event) => {

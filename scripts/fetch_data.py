@@ -17,6 +17,7 @@ except ImportError:  # pragma: no cover - fallback for very small local runtimes
 LOGGER = logging.getLogger(__name__)
 
 EASTMONEY_KLINE_URL = "https://push2his.eastmoney.com/api/qt/stock/kline/get"
+EASTMONEY_QUOTE_URL = "https://push2.eastmoney.com/api/qt/stock/get"
 TENCENT_DAILY_URL = "http://ifzq.gtimg.cn/appstock/app/fqkline/get"
 TENCENT_MINUTE_URL = "http://ifzq.gtimg.cn/appstock/app/kline/mkline"
 HEADERS = {
@@ -97,6 +98,20 @@ def _get_json(url: str, params: dict[str, str], timeout: int) -> dict[str, Any]:
     with urlopen(request, timeout=timeout) as response:
         body = response.read().decode("utf-8")
     return _loads_json_or_jsonp(body)
+
+
+def fetch_stock_name(stock: Stock, timeout: int = 8) -> str:
+    if stock.name:
+        return stock.name
+    if not stock.supported:
+        return ""
+    try:
+        payload = _get_json(EASTMONEY_QUOTE_URL, {"secid": _secid(stock), "fields": "f58"}, timeout)
+        name = str(((payload.get("data") or {}).get("f58")) or "").strip()
+        return "" if name == "-" else name
+    except Exception as exc:  # noqa: BLE001
+        LOGGER.warning("stock name lookup failed for %s: %s", stock.code, exc)
+        return ""
 
 
 def _normalize_rows(rows: list[list[Any]], datetime_format: str | None = None) -> pd.DataFrame:

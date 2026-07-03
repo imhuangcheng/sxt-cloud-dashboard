@@ -6,7 +6,7 @@
   "items": [
     {
       "code": "002709",
-      "name": "",
+      "name": "天赐材料",
       "market": "sz",
       "daily_sxt": 2,
       "minute15_sxt": -2,
@@ -19,7 +19,7 @@
     },
     {
       "code": "300151",
-      "name": "",
+      "name": "昌红科技",
       "market": "sz",
       "daily_sxt": 2,
       "minute15_sxt": -2,
@@ -32,7 +32,7 @@
     },
     {
       "code": "600392",
-      "name": "",
+      "name": "盛和资源",
       "market": "sh",
       "daily_sxt": 2,
       "minute15_sxt": 0,
@@ -45,7 +45,7 @@
     },
     {
       "code": "600458",
-      "name": "",
+      "name": "时代新材",
       "market": "sh",
       "daily_sxt": 2,
       "minute15_sxt": 2,
@@ -58,7 +58,7 @@
     },
     {
       "code": "600601",
-      "name": "",
+      "name": "方正科技",
       "market": "sh",
       "daily_sxt": 2,
       "minute15_sxt": -2,

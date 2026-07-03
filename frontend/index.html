@@ -409,6 +409,16 @@
     const MONITOR_DETAIL_URL = "https://hc-dual-period-monitor.netlify.app/";
     const REFRESH_MS = 60000;
     const STATUS_REFRESH_MS = 30000;
+    const STOCK_NAME_FALLBACKS = {
+      "002709": "天赐材料",
+      "300151": "昌红科技",
+      "300219": "鸿利智汇",
+      "300607": "拓斯达",
+      "600392": "盛和资源",
+      "600458": "时代新材",
+      "600519": "贵州茅台",
+      "600601": "方正科技",
+    };
     let rows = [];
     let watchlist = [];
 
@@ -459,6 +469,12 @@
       return String(row.code || row.symbol || row.stock_code || "").trim();
     }
 
+    function stockName(row) {
+      const name = String(row.name || "").trim();
+      if (name) return name;
+      return STOCK_NAME_FALLBACKS[stockCode(row)] || "";
+    }
+
     function normalizeCodes(codes) {
       return [...new Set(codes.map((code) => String(code).trim()).filter(Boolean))].sort();
     }
@@ -488,7 +504,7 @@
       const filtered = rows.filter((row) => {
         const hitKeyword = !keyword
           || String(row.code || "").toLowerCase().includes(keyword)
-          || String(row.name || "").toLowerCase().includes(keyword);
+          || stockName(row).toLowerCase().includes(keyword);
         const hitStatus = !status || row.status === status;
         return hitKeyword && hitStatus;
       });
@@ -511,7 +527,7 @@
         }
         tr.innerHTML = `
           <td>${escapeHtml(code || "-")}</td>
-          <td>${escapeHtml(row.name || "-")}</td>
+          <td>${escapeHtml(stockName(row) || "-")}</td>
           <td><span class="badge ${badgeClass(row.daily_sxt, row.status)}">${formatValue(row.daily_sxt)}</span></td>
           <td><span class="badge ${badgeClass(row.minute15_sxt, row.status)}">${formatValue(row.minute15_sxt)}</span></td>
           <td><span class="badge ${badgeClass(null, row.status)}">${escapeHtml(row.status || "-")}</span></td>
