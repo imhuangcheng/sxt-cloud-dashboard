@@ -1,13 +1,17 @@
 const WATCHLIST_PATH = "config/watchlist.json";
 const COMMIT_MESSAGE = "chore: update watchlist from SXT Cloud";
+const JSON_HEADERS = {
+  "content-type": "application/json; charset=utf-8",
+  "cache-control": "no-store",
+  "access-control-allow-origin": "*",
+  "access-control-allow-methods": "GET, POST, OPTIONS",
+  "access-control-allow-headers": "Content-Type",
+};
 
 function json(statusCode, body) {
   return {
     statusCode,
-    headers: {
-      "content-type": "application/json; charset=utf-8",
-      "cache-control": "no-store",
-    },
+    headers: JSON_HEADERS,
     body: JSON.stringify(body),
   };
 }
@@ -75,6 +79,10 @@ function decodeContent(content) {
 }
 
 exports.handler = async (event) => {
+  if (event.httpMethod === "OPTIONS") {
+    return { statusCode: 204, headers: JSON_HEADERS, body: "" };
+  }
+
   if (!["GET", "POST"].includes(event.httpMethod)) {
     return json(405, { error: "Method not allowed" });
   }

@@ -406,6 +406,7 @@
     const WATCHLIST_API = "/.netlify/functions/watchlist";
     const WATCHLIST_FALLBACK_URL = "../config/watchlist.json";
     const REFRESH_API = "/.netlify/functions/refresh";
+    const PROD_ORIGIN = "https://sxt-cloud.netlify.app";
     const MONITOR_DETAIL_URL = "https://hc-dual-period-monitor.netlify.app/";
     const REFRESH_MS = 60000;
     const STATUS_REFRESH_MS = 30000;
@@ -477,6 +478,42 @@
 
     function normalizeCodes(codes) {
       return [...new Set(codes.map((code) => String(code).trim()).filter(Boolean))].sort();
+    }
+
+    function candidateUrls(path) {
+      const values = [];
+      const add = (value) => {
+        if (!values.includes(value)) values.push(value);
+      };
+      add(path);
+      if (path.startsWith("/")) {
+        add(`${PROD_ORIGIN}${path}`);
+      } else if (path.startsWith("../")) {
+        add(`${PROD_ORIGIN}/${path.replace(/^\.\.\//, "")}`);
+      }
+      return values;
+    }
+
+    async function fetchWithFallback(path, options = {}) {
+      let lastError = null;
+      let lastResponse = null;
+      for (const url of candidateUrls(path)) {
+        try {
+          const response = await fetch(url, {
+            cache: "no-store",
+            ...options,
+          });
+          if (!response.ok && candidateUrls(path).length > 1) {
+            lastResponse = response;
+            continue;
+          }
+          return response;
+        } catch (error) {
+          lastError = error;
+        }
+      }
+      if (lastResponse) return lastResponse;
+      throw lastError || new Error("Failed to fetch");
     }
 
     function mergeWatchlistRows() {
@@ -554,7 +591,7 @@
 
     async function loadStatus() {
       try {
-        const response = await fetch(`${STATUS_URL}?t=${Date.now()}`, { cache: "no-store" });
+        const response = await fetchWithFallback(`${STATUS_URL}?t=${Date.now()}`);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         renderStatus(await response.json());
       } catch (error) {
@@ -607,9 +644,9 @@
 
     async function loadWatchlist() {
       try {
-        let response = await fetch(`${WATCHLIST_API}?t=${Date.now()}`, { cache: "no-store" });
+        let response = await fetchWithFallback(`${WATCHLIST_API}?t=${Date.now()}`);
         if (!response.ok) {
-          response = await fetch(`${WATCHLIST_FALLBACK_URL}?t=${Date.now()}`, { cache: "no-store" });
+          response = await fetchWithFallback(`${WATCHLIST_FALLBACK_URL}?t=${Date.now()}`);
         }
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         watchlist = readWatchlistPayload(await response.json());
@@ -648,7 +685,7 @@
       }
       saveWatchlistButton.disabled = true;
       try {
-        const response = await fetch(WATCHLIST_API, {
+        const response = await fetchWithFallback(WATCHLIST_API, {
           method: "POST",
           headers: { "content-type": "application/json" },
           body: JSON.stringify({ watchlist: next }),
@@ -668,7 +705,7 @@
     }
 
     async function triggerCloudScan() {
-      const response = await fetch(REFRESH_API, {
+      const response = await fetchWithFallback(REFRESH_API, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ force_scan: true }),
@@ -680,7 +717,7 @@
 
     async function loadData() {
       try {
-        const response = await fetch(`${DATA_URL}?t=${Date.now()}`, { cache: "no-store" });
+        const response = await fetchWithFallback(`${DATA_URL}?t=${Date.now()}`);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const payload = await response.json();
         rows = Array.isArray(payload.items) ? payload.items : [];

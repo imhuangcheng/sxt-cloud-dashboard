@@ -1,14 +1,18 @@
 const WATCHLIST_PATH = "config/watchlist.json";
 const SXT_API = "https://sxt-dual-period-dashboard.netlify.app/.netlify/functions/sxt";
 const EASTMONEY_QUOTE_API = "https://push2.eastmoney.com/api/qt/stock/get";
+const JSON_HEADERS = {
+  "content-type": "application/json; charset=utf-8",
+  "cache-control": "no-store",
+  "access-control-allow-origin": "*",
+  "access-control-allow-methods": "POST, OPTIONS",
+  "access-control-allow-headers": "Content-Type",
+};
 
 function json(statusCode, body) {
   return {
     statusCode,
-    headers: {
-      "content-type": "application/json; charset=utf-8",
-      "cache-control": "no-store",
-    },
+    headers: JSON_HEADERS,
     body: JSON.stringify(body),
   };
 }
@@ -148,6 +152,10 @@ async function scanWatchlist() {
 }
 
 exports.handler = async (event) => {
+  if (event.httpMethod === "OPTIONS") {
+    return { statusCode: 204, headers: JSON_HEADERS, body: "" };
+  }
+
   if (event.httpMethod !== "POST") {
     return json(405, { error: "Method not allowed" });
   }
