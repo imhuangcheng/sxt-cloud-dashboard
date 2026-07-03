@@ -112,6 +112,10 @@ def build_non_trading_payload(now: datetime, previous: dict[str, Any]) -> dict[s
     }
 
 
+def has_existing_dashboard_data(latest_path: Path, status_path: Path) -> bool:
+    return latest_path.exists() and status_path.exists()
+
+
 def main() -> int:
     started_at = datetime.now()
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -126,18 +130,19 @@ def main() -> int:
     force_scan = os.getenv("SXT_FORCE_SCAN", "").strip().lower() in {"1", "true", "yes"}
 
     if not force_scan and not is_trading_time(now, config.get("trading_sessions", [])):
-        LOGGER.info("outside trading sessions, skip scan")
-        write_json(latest_path, build_non_trading_payload(now, previous_latest))
-        write_json(
-            status_path,
-            build_status_payload(
-                now=now,
-                config=config,
-                watchlist=watchlist,
-                signals=sum(1 for item in previous_latest.get("items", []) if item.get("status") == "ALERT"),
-                duration_seconds=(datetime.now() - started_at).total_seconds(),
-            ),
-        )
+        LOGGER.info("outside trading sessions, skip scan without changing dashboard data")
+        if not has_existing_dashboard_data(latest_path, status_path):
+            write_json(latest_path, build_non_trading_payload(now, previous_latest))
+            write_json(
+                status_path,
+                build_status_payload(
+                    now=now,
+                    config=config,
+                    watchlist=watchlist,
+                    signals=sum(1 for item in previous_latest.get("items", []) if item.get("status") == "ALERT"),
+                    duration_seconds=(datetime.now() - started_at).total_seconds(),
+                ),
+            )
         return 0
     if force_scan:
         LOGGER.info("SXT_FORCE_SCAN is enabled, running outside normal trading-time guard")
