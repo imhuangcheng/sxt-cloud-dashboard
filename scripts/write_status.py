@@ -46,6 +46,11 @@ def next_scan_time(now: datetime, interval_minutes: int) -> str:
     return next_time.strftime("%Y-%m-%d %H:%M:%S")
 
 
+def latest_time(items: list[dict[str, Any]], key: str) -> str:
+    values = [str(item.get(key, "")) for item in items if item.get(key)]
+    return max(values) if values else ""
+
+
 def main() -> int:
     config = load_json(CONFIG_DIR / "config.json", {})
     timezone = ZoneInfo(config.get("timezone", "Asia/Shanghai"))
@@ -59,6 +64,11 @@ def main() -> int:
         {
             "status": "error",
             "last_scan": now.strftime("%Y-%m-%d %H:%M:%S"),
+            "last_daily_time": latest_time(items, "last_daily_time"),
+            "last_15m_time": latest_time(items, "last_15m_time"),
+            "is_trading_time": bool(latest.get("is_trading_time", False)) if isinstance(latest, dict) else False,
+            "force_scan": bool(latest.get("force_scan", False)) if isinstance(latest, dict) else False,
+            "message": error[:300],
             "next_scan": next_scan_time(now, int(config.get("scan_interval_minutes", 15))),
             "stocks": watchlist_count(CONFIG_DIR / "watchlist.json"),
             "signals": sum(1 for item in items if item.get("status") == "ALERT"),

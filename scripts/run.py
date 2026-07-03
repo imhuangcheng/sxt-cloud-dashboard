@@ -79,11 +79,21 @@ def build_status_payload(
     signals: int = 0,
     duration_seconds: float = 0,
     last_error: str = "",
+    last_daily_time: str = "",
+    last_15m_time: str = "",
+    is_trading: bool = False,
+    force_scan: bool = False,
+    message: str = "",
     workflow: str = "success",
 ) -> dict[str, Any]:
     return {
         "status": "running" if workflow == "success" else "error",
         "last_scan": now.strftime("%Y-%m-%d %H:%M:%S"),
+        "last_daily_time": last_daily_time,
+        "last_15m_time": last_15m_time,
+        "is_trading_time": is_trading,
+        "force_scan": force_scan,
+        "message": message,
         "next_scan": next_scan_time(now, int(config.get("scan_interval_minutes", 15))),
         "stocks": len(watchlist),
         "signals": signals,
@@ -112,8 +122,9 @@ def build_non_trading_payload(now: datetime, previous: dict[str, Any]) -> dict[s
     }
 
 
-def has_existing_dashboard_data(latest_path: Path, status_path: Path) -> bool:
-    return latest_path.exists() and status_path.exists()
+def latest_time(items: list[dict[str, Any]], key: str) -> str:
+    values = [str(item.get(key, "")) for item in items if item.get(key)]
+    return max(values) if values else ""
 
 
 def main() -> int:
@@ -128,24 +139,32 @@ def main() -> int:
     history_path = DATA_DIR / "alert_history.json"
     previous_latest = load_json(latest_path, {"items": []})
     force_scan = os.getenv("SXT_FORCE_SCAN", "").strip().lower() in {"1", "true", "yes"}
+    trading_now = is_trading_time(now, config.get("trading_sessions", []))
 
-    if not force_scan and not is_trading_time(now, config.get("trading_sessions", [])):
-        LOGGER.info("outside trading sessions, skip scan without changing dashboard data")
-        if not has_existing_dashboard_data(latest_path, status_path):
-            write_json(latest_path, build_non_trading_payload(now, previous_latest))
-            write_json(
-                status_path,
-                build_status_payload(
-                    now=now,
-                    config=config,
-                    watchlist=watchlist,
-                    signals=sum(1 for item in previous_latest.get("items", []) if item.get("status") == "ALERT"),
-                    duration_seconds=(datetime.now() - started_at).total_seconds(),
-                ),
-            )
+    if not force_scan and not trading_now:
+        LOGGER.info("outside trading sessions, skip scan because SXT_FORCE_SCAN is not enabled")
+        previous_items = previous_latest.get("items", []) if isinstance(previous_latest, dict) else []
+        write_json(latest_path, build_non_trading_payload(now, previous_latest))
+        write_json(
+            status_path,
+            build_status_payload(
+                now=now,
+                config=config,
+                watchlist=watchlist,
+                signals=sum(1 for item in previous_items if item.get("status") == "ALERT"),
+                duration_seconds=(datetime.now() - started_at).total_seconds(),
+                last_daily_time=latest_time(previous_items, "last_daily_time"),
+                last_15m_time=latest_time(previous_items, "last_15m_time"),
+                is_trading=trading_now,
+                force_scan=force_scan,
+                message="Outside A-share trading sessions, scan skipped because force_scan is false.",
+            ),
+        )
         return 0
-    if force_scan:
-        LOGGER.info("SXT_FORCE_SCAN is enabled, running outside normal trading-time guard")
+    if force_scan and not trading_now:
+        LOGGER.info("SXT_FORCE_SCAN is enabled, fetching latest available data outside trading sessions")
+    elif force_scan:
+        LOGGER.info("SXT_FORCE_SCAN is enabled, running scan during trading sessions")
 
     alert_condition = config.get("alert_condition", {})
     target_daily = int(alert_condition.get("daily_sxt", 2))
@@ -221,9 +240,9 @@ def main() -> int:
 
     payload = {
         "updated_at": now.strftime("%Y-%m-%d %H:%M:%S"),
-        "is_trading_time": is_trading_time(now, config.get("trading_sessions", [])),
+        "is_trading_time": trading_now,
         "force_scan": force_scan,
-        "message": "Scan completed.",
+        "message": "Force scan completed with latest available data." if force_scan and not trading_now else "Scan completed.",
         "items": items,
     }
     write_json(latest_path, payload)
@@ -237,6 +256,11 @@ def main() -> int:
             signals=sum(1 for item in items if item.get("status") == "ALERT"),
             duration_seconds=(datetime.now() - started_at).total_seconds(),
             last_error="; ".join(item.get("error", "") for item in items if item.get("status") == "ERROR")[:300],
+            last_daily_time=latest_time(items, "last_daily_time"),
+            last_15m_time=latest_time(items, "last_15m_time"),
+            is_trading=trading_now,
+            force_scan=force_scan,
+            message=payload["message"],
         ),
     )
     LOGGER.info("scan completed items=%s", len(items))

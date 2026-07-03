@@ -12,7 +12,7 @@ on:
           - "false"
           - "true"
   schedule:
-    - cron: "*/5 * * * 1-5"
+    - cron: "*/5 1-3,5-7 * * 1-5"
   push:
     paths:
       - "config/watchlist.json"
@@ -21,13 +21,12 @@ on:
 permissions:
   contents: write
 
-concurrency:
-  group: sxt-cloud-monitor-${{ github.ref }}
-  cancel-in-progress: false
-
 jobs:
   monitor:
     runs-on: ubuntu-latest
+    concurrency:
+      group: sxt-cloud-monitor-main
+      cancel-in-progress: false
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -62,21 +61,7 @@ jobs:
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          target_branch="${GITHUB_REF_NAME:-main}"
-          tmpdir="$(mktemp -d)"
-          cp data/latest_signals.json "$tmpdir/latest_signals.json"
-          cp data/alert_history.json "$tmpdir/alert_history.json"
-          cp data/status.json "$tmpdir/status.json"
-          git fetch origin "$target_branch"
-          git reset --hard "origin/$target_branch"
-          mkdir -p data
-          cp "$tmpdir/latest_signals.json" data/latest_signals.json
-          cp "$tmpdir/alert_history.json" data/alert_history.json
-          cp "$tmpdir/status.json" data/status.json
-          if git diff --quiet -- data/latest_signals.json data/alert_history.json data/status.json; then
-            echo "No data changes after syncing latest branch."
-            exit 0
-          fi
           git add data/latest_signals.json data/alert_history.json data/status.json
           git commit -m "Update SXT monitor data"
-          git push origin "HEAD:$target_branch"
+          git pull --rebase origin main
+          git push origin HEAD:main
