@@ -58,6 +58,21 @@ jobs:
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          target_branch="${GITHUB_REF_NAME:-main}"
+          tmpdir="$(mktemp -d)"
+          cp data/latest_signals.json "$tmpdir/latest_signals.json"
+          cp data/alert_history.json "$tmpdir/alert_history.json"
+          cp data/status.json "$tmpdir/status.json"
+          git fetch origin "$target_branch"
+          git reset --hard "origin/$target_branch"
+          mkdir -p data
+          cp "$tmpdir/latest_signals.json" data/latest_signals.json
+          cp "$tmpdir/alert_history.json" data/alert_history.json
+          cp "$tmpdir/status.json" data/status.json
+          if git diff --quiet -- data/latest_signals.json data/alert_history.json data/status.json; then
+            echo "No data changes after syncing latest branch."
+            exit 0
+          fi
           git add data/latest_signals.json data/alert_history.json data/status.json
           git commit -m "Update SXT monitor data"
-          git push
+          git push origin "HEAD:$target_branch"
