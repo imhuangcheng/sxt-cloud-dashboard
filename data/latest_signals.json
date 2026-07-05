@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-07-05 13:43:23",
+  "updated_at": "2026-07-05 13:49:17",
   "is_trading_time": false,
   "force_scan": true,
   "message": "Force scan completed with latest available data.",
@@ -41,6 +41,19 @@
       "last_15m_time": "2026-07-03 15:00:00",
       "error": "",
       "daily_signal": "BUY",
+      "minute15_signal": "NEGATIVE"
+    },
+    {
+      "code": "301107",
+      "name": "瑜欣电子",
+      "market": "sz",
+      "daily_sxt": 0,
+      "minute15_sxt": -2,
+      "status": "WATCH",
+      "last_daily_time": "2026-07-03 00:00:00",
+      "last_15m_time": "2026-07-03 15:00:00",
+      "error": "",
+      "daily_signal": "NEUTRAL",
       "minute15_signal": "NEGATIVE"
     },
     {
