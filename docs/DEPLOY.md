@@ -34,6 +34,8 @@ Value: 你的 Server 酱 sendkey
 
 不要把真实 sendkey 写入 `config/serverchan.json` 或其他仓库文件。
 
+Netlify 侧的 `GITHUB_TOKEN` 需要允许读取/写入 Contents，并允许触发 Actions workflow dispatch；页面“刷新”按钮会触发本项目 GitHub Actions 的 `force_scan=true`。
+
 ## 3. 启用 GitHub Actions
 
 进入仓库的 `Actions` 页面，允许 workflow 运行。定时任务使用 UTC 时间：
@@ -105,4 +107,4 @@ Actions -> SXT cloud monitor -> Run workflow
 
 ### 行情源连接不稳定
 
-程序默认优先使用腾讯行情接口，东方财富接口作为兜底。单个接口失败时会尝试下一个接口，仍失败才把错误写入对应股票。
+程序按 `simonlin1212/a-stock-data` 的行情层取数，使用腾讯日K/15分钟K和腾讯实时行情名称。单只股票失败会把错误写入对应股票，不影响其他股票继续扫描。

@@ -75,7 +75,7 @@ def main() -> int:
             "duration_seconds": 0,
             "last_error": error[:300],
             "workflow": "failed",
-            "data_source": str(config.get("data_source", "tencent_or_eastmoney")),
+            "data_source": str(config.get("data_source", "a-stock-data/tencent")),
             "version": VERSION,
         },
     )

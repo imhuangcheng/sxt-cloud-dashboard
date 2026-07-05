@@ -8,6 +8,7 @@ from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 import pandas as pd
+
 try:
     import requests
 except ImportError:  # pragma: no cover - fallback for very small local runtimes
@@ -16,8 +17,7 @@ except ImportError:  # pragma: no cover - fallback for very small local runtimes
 
 LOGGER = logging.getLogger(__name__)
 
-EASTMONEY_KLINE_URL = "https://push2his.eastmoney.com/api/qt/stock/kline/get"
-EASTMONEY_QUOTE_URL = "https://push2.eastmoney.com/api/qt/stock/get"
+TENCENT_QUOTE_URL = "https://qt.gtimg.cn/q="
 TENCENT_DAILY_URL = "http://ifzq.gtimg.cn/appstock/app/fqkline/get"
 TENCENT_MINUTE_URL = "http://ifzq.gtimg.cn/appstock/app/kline/mkline"
 HEADERS = {
@@ -25,7 +25,7 @@ HEADERS = {
         "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
         "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126 Safari/537.36"
     ),
-    "Referer": "https://quote.eastmoney.com/",
+    "Referer": "https://gu.qq.com/",
 }
 
 
@@ -71,11 +71,6 @@ def normalize_stock(raw: dict[str, Any] | str) -> Stock:
     return Stock(code=code, name=name, market=market)
 
 
-def _secid(stock: Stock) -> str:
-    prefix = "1" if stock.market == "sh" else "0"
-    return f"{prefix}.{stock.code}"
-
-
 def _tencent_symbol(stock: Stock) -> str:
     return f"{stock.market}{stock.code}"
 
@@ -100,14 +95,47 @@ def _get_json(url: str, params: dict[str, str], timeout: int) -> dict[str, Any]:
     return _loads_json_or_jsonp(body)
 
 
+def _get_text(url: str, timeout: int, encoding: str = "utf-8") -> str:
+    if requests is not None:
+        response = requests.get(url, headers=HEADERS, timeout=timeout)
+        response.raise_for_status()
+        response.encoding = encoding
+        return response.text
+
+    request = Request(url, headers=HEADERS)
+    with urlopen(request, timeout=timeout) as response:
+        return response.read().decode(encoding, errors="replace")
+
+
+def fetch_tencent_quote(stock: Stock, timeout: int = 8) -> dict[str, Any]:
+    if not stock.supported:
+        return {}
+    symbol = _tencent_symbol(stock)
+    body = _get_text(f"{TENCENT_QUOTE_URL}{symbol}", timeout=timeout, encoding="gbk")
+    for line in body.strip().split(";"):
+        if not line.strip() or "=" not in line or '"' not in line:
+            continue
+        key = line.split("=", 1)[0].split("_")[-1]
+        if key != symbol:
+            continue
+        values = line.split('"', 2)[1].split("~")
+        if len(values) < 3:
+            continue
+        return {
+            "name": values[1].strip(),
+            "code": values[2].strip(),
+        }
+    return {}
+
+
 def fetch_stock_name(stock: Stock, timeout: int = 8) -> str:
     if stock.name:
         return stock.name
     if not stock.supported:
         return ""
     try:
-        payload = _get_json(EASTMONEY_QUOTE_URL, {"secid": _secid(stock), "fields": "f58"}, timeout)
-        name = str(((payload.get("data") or {}).get("f58")) or "").strip()
+        quote = fetch_tencent_quote(stock, timeout=timeout)
+        name = str(quote.get("name") or "").strip()
         return "" if name == "-" else name
     except Exception as exc:  # noqa: BLE001
         LOGGER.warning("stock name lookup failed for %s: %s", stock.code, exc)
@@ -139,7 +167,7 @@ def _normalize_rows(rows: list[list[Any]], datetime_format: str | None = None) -
     return df.dropna(subset=["datetime", "open", "high", "low", "close"]).reset_index(drop=True)
 
 
-def fetch_tencent_kline(stock: Stock, period: str, limit: int = 260, timeout: int = 12) -> pd.DataFrame:
+def fetch_a_stock_data_kline(stock: Stock, period: str, limit: int = 260, timeout: int = 12) -> pd.DataFrame:
     symbol = _tencent_symbol(stock)
     if period == "daily":
         payload = _get_json(
@@ -160,40 +188,7 @@ def fetch_tencent_kline(stock: Stock, period: str, limit: int = 260, timeout: in
 
     if df.empty:
         raise RuntimeError(f"empty Tencent kline data for {stock.code} {period}")
-    LOGGER.info("fetched %s %s bars=%s source=tencent", stock.code, period, len(df))
-    return df
-
-
-def fetch_eastmoney_kline(stock: Stock, period: str, limit: int = 260, timeout: int = 12) -> pd.DataFrame:
-    klt = {"daily": "101", "15m": "15"}.get(period)
-    if not klt:
-        raise ValueError(f"unsupported period: {period}")
-
-    params = {
-        "secid": _secid(stock),
-        "fields1": "f1,f2,f3,f4,f5,f6",
-        "fields2": "f51,f52,f53,f54,f55,f56,f57,f58,f59,f60,f61",
-        "klt": klt,
-        "fqt": "1",
-        "beg": "20200101",
-        "end": "20500101",
-        "lmt": str(limit),
-    }
-    payload = _get_json(EASTMONEY_KLINE_URL, params, timeout)
-    klines = (payload.get("data") or {}).get("klines") or []
-    if not klines:
-        raise RuntimeError(f"empty kline data for {stock.code} {period}")
-
-    rows = []
-    for line in klines:
-        parts = line.split(",")
-        if len(parts) >= 6:
-            rows.append(parts[:6])
-    df = _normalize_rows(rows)
-    if df.empty:
-        raise RuntimeError(f"invalid kline data for {stock.code} {period}")
-
-    LOGGER.info("fetched %s %s bars=%s source=eastmoney", stock.code, period, len(df))
+    LOGGER.info("fetched %s %s bars=%s source=a-stock-data/tencent", stock.code, period, len(df))
     return df
 
 
@@ -201,14 +196,7 @@ def fetch_kline(stock: Stock, period: str, limit: int = 260, timeout: int = 12) 
     if not stock.supported:
         raise ValueError(stock.reason or "unsupported stock")
 
-    errors: list[str] = []
-    for source in (fetch_tencent_kline, fetch_eastmoney_kline):
-        try:
-            return source(stock, period, limit=limit, timeout=timeout)
-        except Exception as exc:  # noqa: BLE001
-            errors.append(f"{source.__name__}: {exc}")
-            LOGGER.warning("%s failed for %s %s: %s", source.__name__, stock.code, period, exc)
-    raise RuntimeError("; ".join(errors))
+    return fetch_a_stock_data_kline(stock, period, limit=limit, timeout=timeout)
 
 
 def fetch_daily(stock: Stock, limit: int = 260) -> pd.DataFrame:

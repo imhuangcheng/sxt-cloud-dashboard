@@ -10,7 +10,7 @@
     "daily_sxt": 2,
     "minute15_sxt": 2
   },
-  "data_source": "tencent_or_eastmoney",
+  "data_source": "a-stock-data/tencent",
   "dedup_minutes": 240,
   "min_daily_bars": 80,
   "min_minute15_bars": 120

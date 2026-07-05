@@ -100,7 +100,7 @@ def build_status_payload(
         "duration_seconds": round(duration_seconds, 2),
         "last_error": last_error,
         "workflow": workflow,
-        "data_source": str(config.get("data_source", "tencent_or_eastmoney")),
+        "data_source": str(config.get("data_source", "a-stock-data/tencent")),
         "version": VERSION,
     }
 
@@ -172,7 +172,7 @@ def main() -> int:
     min_daily_bars = int(config.get("min_daily_bars", 80))
     min_minute15_bars = int(config.get("min_minute15_bars", 120))
     dedup_minutes = int(config.get("dedup_minutes", 240))
-    data_source = str(config.get("data_source", "eastmoney"))
+    data_source = str(config.get("data_source", "a-stock-data/tencent"))
     history = load_alert_history(history_path)
     prune_history(history, now)
 

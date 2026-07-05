@@ -12,6 +12,6 @@
   "duration_seconds": 20.67,
   "last_error": "",
   "workflow": "success",
-  "data_source": "tencent_or_eastmoney",
+  "data_source": "a-stock-data/tencent",
   "version": "v1.1.0"
 }
