@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-07-04 23:07:12",
+  "updated_at": "2026-07-05 13:43:23",
   "is_trading_time": false,
   "force_scan": true,
   "message": "Force scan completed with latest available data.",
@@ -18,21 +18,8 @@
       "minute15_signal": "BUY"
     },
     {
-      "code": "002876",
-      "name": "",
-      "market": "sz",
-      "daily_sxt": 2,
-      "minute15_sxt": 0,
-      "status": "WATCH",
-      "last_daily_time": "2026-07-03 00:00:00",
-      "last_15m_time": "2026-07-03 15:00:00",
-      "error": "",
-      "daily_signal": "BUY",
-      "minute15_signal": "NEUTRAL"
-    },
-    {
       "code": "300151",
-      "name": "",
+      "name": "昌红科技",
       "market": "sz",
       "daily_sxt": 2,
       "minute15_sxt": -2,
@@ -45,7 +32,7 @@
     },
     {
       "code": "600458",
-      "name": "",
+      "name": "时代新材",
       "market": "sh",
       "daily_sxt": 2,
       "minute15_sxt": -2,
@@ -58,7 +45,7 @@
     },
     {
       "code": "600601",
-      "name": "",
+      "name": "方正科技",
       "market": "sh",
       "daily_sxt": 2,
       "minute15_sxt": -2,
