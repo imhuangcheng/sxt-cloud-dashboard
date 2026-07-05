@@ -9,7 +9,7 @@ from typing import Any
 from zoneinfo import ZoneInfo
 
 from calc_sxt import calculate_sxt
-from fetch_data import fetch_15m, fetch_daily, fetch_stock_name, normalize_stock
+from fetch_data import fetch_15m, fetch_daily, fetch_stock_name, fetch_stock_names, normalize_stock
 from notifier import (
     load_alert_history,
     notify_signal,
@@ -176,10 +176,16 @@ def main() -> int:
     history = load_alert_history(history_path)
     prune_history(history, now)
 
+    stocks = [normalize_stock(raw_stock) for raw_stock in watchlist]
+    try:
+        stock_names = fetch_stock_names(stocks)
+    except Exception as exc:  # noqa: BLE001
+        LOGGER.warning("batch stock name lookup failed: %s", exc)
+        stock_names = {}
+
     items: list[dict[str, Any]] = []
-    for raw_stock in watchlist:
-        stock = normalize_stock(raw_stock)
-        stock_name = fetch_stock_name(stock)
+    for stock in stocks:
+        stock_name = stock_names.get(stock.code) or fetch_stock_name(stock)
         item: dict[str, Any] = {
             "code": stock.code,
             "name": stock_name,

@@ -18,6 +18,19 @@
       "minute15_signal": "BUY"
     },
     {
+      "code": "002876",
+      "name": "三利谱",
+      "market": "sz",
+      "daily_sxt": 2,
+      "minute15_sxt": 0,
+      "status": "WATCH",
+      "last_daily_time": "2026-07-03 00:00:00",
+      "last_15m_time": "2026-07-03 15:00:00",
+      "error": "",
+      "daily_signal": "BUY",
+      "minute15_signal": "NEUTRAL"
+    },
+    {
       "code": "300151",
       "name": "昌红科技",
       "market": "sz",

@@ -107,25 +107,46 @@ def _get_text(url: str, timeout: int, encoding: str = "utf-8") -> str:
         return response.read().decode(encoding, errors="replace")
 
 
+def _parse_tencent_quote_lines(body: str) -> dict[str, dict[str, Any]]:
+    quotes: dict[str, dict[str, Any]] = {}
+    for line in body.strip().split(";"):
+        if not line.strip() or "=" not in line or '"' not in line:
+            continue
+        key = line.split("=", 1)[0].split("_")[-1]
+        values = line.split('"', 2)[1].split("~")
+        if len(values) < 3:
+            continue
+        quotes[key] = {
+            "name": values[1].strip(),
+            "code": values[2].strip(),
+        }
+    return quotes
+
+
 def fetch_tencent_quote(stock: Stock, timeout: int = 8) -> dict[str, Any]:
     if not stock.supported:
         return {}
     symbol = _tencent_symbol(stock)
     body = _get_text(f"{TENCENT_QUOTE_URL}{symbol}", timeout=timeout, encoding="gbk")
-    for line in body.strip().split(";"):
-        if not line.strip() or "=" not in line or '"' not in line:
+    return _parse_tencent_quote_lines(body).get(symbol, {})
+
+
+def fetch_stock_names(stocks: list[Stock], timeout: int = 10) -> dict[str, str]:
+    symbols = [_tencent_symbol(stock) for stock in stocks if stock.supported and not stock.name]
+    if not symbols:
+        return {}
+    body = _get_text(f"{TENCENT_QUOTE_URL}{','.join(symbols)}", timeout=timeout, encoding="gbk")
+    quotes = _parse_tencent_quote_lines(body)
+    names: dict[str, str] = {}
+    for stock in stocks:
+        if stock.name:
+            names[stock.code] = stock.name
             continue
-        key = line.split("=", 1)[0].split("_")[-1]
-        if key != symbol:
-            continue
-        values = line.split('"', 2)[1].split("~")
-        if len(values) < 3:
-            continue
-        return {
-            "name": values[1].strip(),
-            "code": values[2].strip(),
-        }
-    return {}
+        quote = quotes.get(_tencent_symbol(stock), {})
+        name = str(quote.get("name") or "").strip()
+        if name and name != "-":
+            names[stock.code] = name
+    return names
 
 
 def fetch_stock_name(stock: Stock, timeout: int = 8) -> str:
