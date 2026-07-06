@@ -1,8 +1,7 @@
 {
-  "updated_at": "2026-07-06 10:44:18",
-  "is_trading_time": true,
-  "force_scan": true,
-  "message": "Scan completed.",
+  "updated_at": "2026-07-06 22:17:54",
+  "is_trading_time": false,
+  "message": "Outside A-share trading sessions, scan skipped.",
   "items": [
     {
       "code": "002709",
