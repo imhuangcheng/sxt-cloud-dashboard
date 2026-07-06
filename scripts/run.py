@@ -38,6 +38,12 @@ def write_json(path: Path, payload: Any) -> None:
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
+def latest_bar_time(frame: Any) -> str:
+    if frame is None or frame.empty:
+        return ""
+    return frame.iloc[-1]["datetime"].strftime("%Y-%m-%d %H:%M:%S")
+
+
 def load_watchlist(path: Path) -> list[Any]:
     payload = load_json(path, {"watchlist": []})
     if isinstance(payload, dict):
@@ -86,15 +92,19 @@ def build_status_payload(
     message: str = "",
     workflow: str = "success",
 ) -> dict[str, Any]:
+    last_scan = now.strftime("%Y-%m-%d %H:%M:%S")
+    next_scan = next_scan_time(now, int(config.get("scan_interval_minutes", 15)))
     return {
         "status": "running" if workflow == "success" else "error",
-        "last_scan": now.strftime("%Y-%m-%d %H:%M:%S"),
+        "last_scan": last_scan,
+        "last_scan_time": last_scan,
         "last_daily_time": last_daily_time,
         "last_15m_time": last_15m_time,
         "is_trading_time": is_trading,
         "force_scan": force_scan,
         "message": message,
-        "next_scan": next_scan_time(now, int(config.get("scan_interval_minutes", 15))),
+        "next_scan": next_scan,
+        "next_scan_time": next_scan,
         "stocks": len(watchlist),
         "signals": signals,
         "duration_seconds": round(duration_seconds, 2),
@@ -135,6 +145,7 @@ def main() -> int:
     timezone = ZoneInfo(config.get("timezone", "Asia/Shanghai"))
     now = datetime.now(timezone).replace(tzinfo=None)
     latest_path = DATA_DIR / "latest_signals.json"
+    latest_alias_path = DATA_DIR / "latest.json"
     status_path = DATA_DIR / "status.json"
     history_path = DATA_DIR / "alert_history.json"
     previous_latest = load_json(latest_path, {"items": []})
@@ -144,7 +155,9 @@ def main() -> int:
     if not force_scan and not trading_now:
         LOGGER.info("outside trading sessions, skip scan because SXT_FORCE_SCAN is not enabled")
         previous_items = previous_latest.get("items", []) if isinstance(previous_latest, dict) else []
-        write_json(latest_path, build_non_trading_payload(now, previous_latest))
+        non_trading_payload = build_non_trading_payload(now, previous_latest)
+        write_json(latest_path, non_trading_payload)
+        write_json(latest_alias_path, non_trading_payload)
         write_json(
             status_path,
             build_status_payload(
@@ -208,6 +221,12 @@ def main() -> int:
         try:
             daily = fetch_daily(stock)
             minute15 = fetch_15m(stock)
+            LOGGER.info(
+                "stock=%s latest_daily_bar_time=%s latest_15m_bar_time=%s",
+                stock.code,
+                latest_bar_time(daily) or "-",
+                latest_bar_time(minute15) or "-",
+            )
             daily_result = calculate_sxt(daily, min_bars=min_daily_bars)
             minute15_result = calculate_sxt(minute15, min_bars=min_minute15_bars)
             item.update(
@@ -240,6 +259,12 @@ def main() -> int:
         except Exception as exc:  # noqa: BLE001
             item["status"] = "ERROR"
             item["error"] = str(exc)
+            LOGGER.info(
+                "stock=%s latest_daily_bar_time=%s latest_15m_bar_time=%s",
+                stock.code,
+                item.get("last_daily_time") or "-",
+                item.get("last_15m_time") or "-",
+            )
             LOGGER.exception("scan failed for %s", stock.code)
 
         items.append(item)
@@ -252,6 +277,7 @@ def main() -> int:
         "items": items,
     }
     write_json(latest_path, payload)
+    write_json(latest_alias_path, payload)
     save_alert_history(history_path, history)
     write_json(
         status_path,

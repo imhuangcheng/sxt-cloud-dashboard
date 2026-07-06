@@ -495,12 +495,19 @@
       return values;
     }
 
+    function cacheBust(url) {
+      const separator = url.includes("?") ? "&" : "?";
+      return `${url}${separator}t=${Date.now()}`;
+    }
+
     async function fetchWithFallback(path, options = {}) {
       let lastError = null;
       let lastResponse = null;
+      const method = String(options.method || "GET").toUpperCase();
       for (const url of candidateUrls(path)) {
         try {
-          const response = await fetch(url, {
+          const requestUrl = method === "GET" ? cacheBust(url) : url;
+          const response = await fetch(requestUrl, {
             cache: "no-store",
             ...options,
           });
@@ -581,8 +588,8 @@
       workflowBadge.textContent = payload.workflow || "-";
       workflowBadge.className = `badge ${payload.workflow === "failed" ? "bad" : "buy"}`;
       cloudStatus.textContent = payload.status || "-";
-      lastScan.textContent = payload.last_scan || "-";
-      nextScan.textContent = payload.next_scan || "-";
+      lastScan.textContent = payload.last_scan_time || payload.last_scan || "-";
+      nextScan.textContent = payload.next_scan_time || payload.next_scan || "-";
       stockCount.textContent = formatValue(payload.stocks);
       signalCount.textContent = formatValue(payload.signals);
       durationSeconds.textContent = payload.duration_seconds === undefined ? "-" : `${payload.duration_seconds}s`;
@@ -592,7 +599,7 @@
 
     async function loadStatus() {
       try {
-        const response = await fetchWithFallback(`${STATUS_URL}?t=${Date.now()}`);
+        const response = await fetchWithFallback(STATUS_URL);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         renderStatus(await response.json());
       } catch (error) {
@@ -645,9 +652,9 @@
 
     async function loadWatchlist() {
       try {
-        let response = await fetchWithFallback(`${WATCHLIST_API}?t=${Date.now()}`);
+        let response = await fetchWithFallback(WATCHLIST_API);
         if (!response.ok) {
-          response = await fetchWithFallback(`${WATCHLIST_FALLBACK_URL}?t=${Date.now()}`);
+          response = await fetchWithFallback(WATCHLIST_FALLBACK_URL);
         }
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         watchlist = readWatchlistPayload(await response.json());
@@ -718,7 +725,7 @@
 
     async function loadData() {
       try {
-        const response = await fetchWithFallback(`${DATA_URL}?t=${Date.now()}`);
+        const response = await fetchWithFallback(DATA_URL);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const payload = await response.json();
         rows = Array.isArray(payload.items) ? payload.items : [];

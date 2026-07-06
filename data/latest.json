@@ -1,0 +1,73 @@
+{
+  "updated_at": "2026-07-05 13:43:23",
+  "is_trading_time": false,
+  "force_scan": true,
+  "message": "Force scan completed with latest available data.",
+  "items": [
+    {
+      "code": "002709",
+      "name": "天赐材料",
+      "market": "sz",
+      "daily_sxt": 2,
+      "minute15_sxt": 2,
+      "status": "ALERT",
+      "last_daily_time": "2026-07-03 00:00:00",
+      "last_15m_time": "2026-07-03 15:00:00",
+      "error": "",
+      "daily_signal": "BUY",
+      "minute15_signal": "BUY"
+    },
+    {
+      "code": "002876",
+      "name": "三利谱",
+      "market": "sz",
+      "daily_sxt": 2,
+      "minute15_sxt": 0,
+      "status": "WATCH",
+      "last_daily_time": "2026-07-03 00:00:00",
+      "last_15m_time": "2026-07-03 15:00:00",
+      "error": "",
+      "daily_signal": "BUY",
+      "minute15_signal": "NEUTRAL"
+    },
+    {
+      "code": "300151",
+      "name": "昌红科技",
+      "market": "sz",
+      "daily_sxt": 2,
+      "minute15_sxt": -2,
+      "status": "WATCH",
+      "last_daily_time": "2026-07-03 00:00:00",
+      "last_15m_time": "2026-07-03 15:00:00",
+      "error": "",
+      "daily_signal": "BUY",
+      "minute15_signal": "NEGATIVE"
+    },
+    {
+      "code": "600458",
+      "name": "时代新材",
+      "market": "sh",
+      "daily_sxt": 2,
+      "minute15_sxt": -2,
+      "status": "WATCH",
+      "last_daily_time": "2026-07-03 00:00:00",
+      "last_15m_time": "2026-07-03 15:00:00",
+      "error": "",
+      "daily_signal": "BUY",
+      "minute15_signal": "NEGATIVE"
+    },
+    {
+      "code": "600601",
+      "name": "方正科技",
+      "market": "sh",
+      "daily_sxt": 2,
+      "minute15_sxt": -2,
+      "status": "WATCH",
+      "last_daily_time": "2026-07-03 00:00:00",
+      "last_15m_time": "2026-07-03 15:00:00",
+      "error": "",
+      "daily_signal": "BUY",
+      "minute15_signal": "NEGATIVE"
+    }
+  ]
+}

@@ -58,18 +58,22 @@ def main() -> int:
     latest = load_json(DATA_DIR / "latest_signals.json", {"items": []})
     items = latest.get("items", []) if isinstance(latest, dict) else []
     error = os.getenv("SXT_STATUS_ERROR", "GitHub Actions monitor step failed.").strip()
+    last_scan = now.strftime("%Y-%m-%d %H:%M:%S")
+    next_scan = next_scan_time(now, int(config.get("scan_interval_minutes", 15)))
 
     write_json(
         DATA_DIR / "status.json",
         {
             "status": "error",
-            "last_scan": now.strftime("%Y-%m-%d %H:%M:%S"),
+            "last_scan": last_scan,
+            "last_scan_time": last_scan,
             "last_daily_time": latest_time(items, "last_daily_time"),
             "last_15m_time": latest_time(items, "last_15m_time"),
             "is_trading_time": bool(latest.get("is_trading_time", False)) if isinstance(latest, dict) else False,
             "force_scan": bool(latest.get("force_scan", False)) if isinstance(latest, dict) else False,
             "message": error[:300],
-            "next_scan": next_scan_time(now, int(config.get("scan_interval_minutes", 15))),
+            "next_scan": next_scan,
+            "next_scan_time": next_scan,
             "stocks": watchlist_count(CONFIG_DIR / "watchlist.json"),
             "signals": sum(1 for item in items if item.get("status") == "ALERT"),
             "duration_seconds": 0,

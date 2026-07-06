@@ -95,7 +95,7 @@ Actions -> SXT cloud monitor -> Run workflow
 
 ### Actions 运行了但没有提交
 
-如果 `data/latest_signals.json` 和 `data/alert_history.json` 没有变化，workflow 会直接退出，不创建新提交。
+Actions 会在每次运行后暂存 `data/latest_signals.json`、`data/latest.json`、`data/alert_history.json` 和 `data/status.json`。即使没有新信号，也会通过 `status.json` 记录最新扫描时间、下次扫描时间和运行说明，然后提交可见的运行状态。
 
 ### 非交易时间运行
 
