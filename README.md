@@ -31,12 +31,17 @@ SXT_FORCE_SCAN=true python scripts/run.py
 
 ## 配置股票池
 
-编辑 `config/watchlist.json`：
+股票池现在以 `config/watchlist_groups.json` 为主配置，第一列“汇总”由所有分组去重生成；程序会同步维护旧格式 `config/watchlist.json`，因此扫描逻辑仍兼容原配置。旧项目首次运行时会从 `watchlist.json` 迁移到“默认分组”，并创建 `watchlist.json.bak` 备份。
+
+网页支持新增、重命名、删除分组，以及在分组内增删股票。保存时会通过 Netlify Function 同步提交分组配置和兼容旧股票池；若兼容文件更新失败，页面会明确提示部分成功。
+
+手动配置时编辑 `config/watchlist_groups.json`：
 
 ```json
 {
-  "watchlist": [
-    "300607"
+  "version": 1,
+  "groups": [
+    { "id": "default", "name": "默认分组", "symbols": ["300607"] }
   ]
 }
 ```

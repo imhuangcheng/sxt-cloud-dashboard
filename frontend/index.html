@@ -168,6 +168,20 @@
       margin-bottom: 12px;
     }
 
+    .group-board { display: flex; gap: 16px; overflow-x: auto; align-items: flex-start; padding-bottom: 8px; }
+    .group-card { flex: 0 0 280px; max-width: 320px; border: 1px solid var(--line); border-radius: 8px; padding: 12px; background: #fbfcfe; }
+    .group-card.summary { background: #f5f8ff; }
+    .group-card-head { display: flex; justify-content: space-between; gap: 8px; align-items: center; margin-bottom: 10px; }
+    .group-card-head strong { overflow-wrap: anywhere; }
+    .group-actions { display: flex; gap: 6px; margin-top: 10px; }
+    .group-actions button { height: 30px; font-size: 12px; }
+    .group-symbols { display: flex; flex-direction: column; gap: 6px; min-height: 34px; }
+    .group-symbol { display: flex; justify-content: space-between; gap: 6px; align-items: center; padding: 5px 7px; border: 1px solid var(--line); border-radius: 5px; background: #fff; }
+    .group-symbol button { border: 0; background: transparent; color: var(--red); padding: 0 4px; height: 24px; }
+    .group-add { display: flex; gap: 6px; }
+    .group-add input { min-width: 0; width: 100%; }
+    .group-add button { flex: 0 0 auto; }
+
     .watchlist-list {
       display: flex;
       flex-wrap: wrap;
@@ -366,15 +380,11 @@
       <div class="panel">
         <div class="panel-head">
           <h2 class="panel-title">股票池管理</h2>
-          <span class="meta" id="watchlistCount">0 只</span>
+          <span class="meta" id="watchlistCount">0 个分组 / 0 只</span>
         </div>
         <div class="panel-body">
-          <div class="watchlist-form">
-            <input id="watchlistInput" type="text" inputmode="numeric" maxlength="6" placeholder="输入 6 位股票代码">
-            <button id="addWatchlistButton" type="button">新增</button>
-            <button class="secondary" id="saveWatchlistButton" type="button">保存</button>
-          </div>
-          <div class="watchlist-list" id="watchlistList"></div>
+          <div class="controls" style="margin-bottom:12px"><button id="newGroupButton" type="button">+ 新建分组</button><button class="secondary" id="saveWatchlistButton" type="button">保存变更</button><select id="groupFilter"><option value="">全部分组</option></select></div>
+          <div class="group-board" id="groupBoard"></div>
           <div class="watchlist-message" id="watchlistMessage"></div>
         </div>
       </div>
@@ -386,6 +396,7 @@
           <tr>
             <th>股票代码</th>
             <th>股票名称</th>
+            <th>所属分组</th>
             <th>日K SXT</th>
             <th>15分钟 SXT</th>
             <th>状态</th>
@@ -404,7 +415,7 @@
     const DATA_URL = "../data/latest_signals.json";
     const STATUS_URL = "../data/status.json";
     const WATCHLIST_API = "/.netlify/functions/watchlist";
-    const WATCHLIST_FALLBACK_URL = "../config/watchlist.json";
+    const WATCHLIST_FALLBACK_URL = "../config/watchlist_groups.json";
     const REFRESH_API = "/.netlify/functions/refresh";
     const PROD_ORIGIN = "https://sxt-cloud.netlify.app";
     const MONITOR_DETAIL_URL = "https://hc-dual-period-monitor.netlify.app/";
@@ -423,6 +434,7 @@
     };
     let rows = [];
     let watchlist = [];
+    let groupsPayload = { version: 1, groups: [] };
 
     const updatedAt = document.getElementById("updatedAt");
     const message = document.getElementById("message");
@@ -439,10 +451,10 @@
     const signalCount = document.getElementById("signalCount");
     const durationSeconds = document.getElementById("durationSeconds");
     const statusMessage = document.getElementById("statusMessage");
-    const watchlistInput = document.getElementById("watchlistInput");
-    const addWatchlistButton = document.getElementById("addWatchlistButton");
+    const newGroupButton = document.getElementById("newGroupButton");
     const saveWatchlistButton = document.getElementById("saveWatchlistButton");
-    const watchlistList = document.getElementById("watchlistList");
+    const groupFilter = document.getElementById("groupFilter");
+    const groupBoard = document.getElementById("groupBoard");
     const watchlistCount = document.getElementById("watchlistCount");
     const watchlistMessage = document.getElementById("watchlistMessage");
 
@@ -543,15 +555,21 @@
       rows = [...merged, ...existing.values()];
     }
 
+    function groupsFor(code) {
+      return groupsPayload.groups.filter((group) => group.symbols.includes(code)).map((group) => group.name);
+    }
+
     function render() {
       const keyword = searchInput.value.trim().toLowerCase();
       const status = statusFilter.value;
+      const selectedGroup = groupFilter.value;
       const filtered = rows.filter((row) => {
         const hitKeyword = !keyword
           || String(row.code || "").toLowerCase().includes(keyword)
           || stockName(row).toLowerCase().includes(keyword);
         const hitStatus = !status || row.status === status;
-        return hitKeyword && hitStatus;
+        const hitGroup = !selectedGroup || groupsPayload.groups.find((group) => group.id === selectedGroup)?.symbols.includes(stockCode(row));
+        return hitKeyword && hitStatus && hitGroup;
       });
 
       tableBody.innerHTML = "";
@@ -573,6 +591,7 @@
         tr.innerHTML = `
           <td>${escapeHtml(code || "-")}</td>
           <td>${escapeHtml(stockName(row) || "-")}</td>
+          <td>${escapeHtml(groupsFor(code).join("、") || "-")}</td>
           <td><span class="badge ${badgeClass(row.daily_sxt, row.status)}">${formatValue(row.daily_sxt)}</span></td>
           <td><span class="badge ${badgeClass(row.minute15_sxt, row.status)}">${formatValue(row.minute15_sxt)}</span></td>
           <td><span class="badge ${badgeClass(null, row.status)}">${escapeHtml(row.status || "-")}</span></td>
@@ -622,27 +641,44 @@
     }
 
     function renderWatchlist() {
-      watchlistList.innerHTML = "";
-      watchlistCount.textContent = `${watchlist.length} 只`;
-      for (const code of watchlist) {
-        const chip = document.createElement("span");
-        chip.className = "watchlist-chip";
-        chip.innerHTML = `<span>${escapeHtml(code)}</span>`;
-        const removeButton = document.createElement("button");
-        removeButton.type = "button";
-        removeButton.textContent = "×";
-        removeButton.setAttribute("aria-label", `删除 ${code}`);
-        removeButton.addEventListener("click", () => {
-          watchlist = watchlist.filter((item) => item !== code);
-          renderWatchlist();
-          setWatchlistMessage("股票池已修改，请保存。");
-        });
-        chip.appendChild(removeButton);
-        watchlistList.appendChild(chip);
+      groupBoard.innerHTML = "";
+      watchlistCount.textContent = `${groupsPayload.groups.length} 个分组 / ${watchlist.length} 只`;
+      groupFilter.innerHTML = '<option value="">全部分组</option>';
+      for (const group of groupsPayload.groups) {
+        groupFilter.insertAdjacentHTML("beforeend", `<option value="${escapeHtml(group.id)}">${escapeHtml(group.name)}</option>`);
+      }
+      const all = { id: "summary", name: "汇总", symbols: watchlist };
+      for (const group of [all, ...groupsPayload.groups]) {
+        const card = document.createElement("div"); card.className = `group-card ${group.id === "summary" ? "summary" : ""}`;
+        card.innerHTML = `<div class="group-card-head"><strong>${escapeHtml(group.name)}</strong><span class="meta">${group.symbols.length} 只</span></div>`;
+        const list = document.createElement("div"); list.className = "group-symbols";
+        for (const code of group.symbols) {
+          const row = document.createElement("div"); row.className = "group-symbol";
+          row.innerHTML = `<span>${escapeHtml(code)} ${escapeHtml(STOCK_NAME_FALLBACKS[code] || "")}</span>`;
+          if (group.id !== "summary") {
+            const remove = document.createElement("button"); remove.textContent = "×"; remove.title = `从${group.name}删除`;
+            remove.onclick = () => { group.symbols = group.symbols.filter((item) => item !== code); renderWatchlist(); setWatchlistMessage("股票池已修改，请保存。"); };
+            row.appendChild(remove);
+          }
+          list.appendChild(row);
+        }
+        card.appendChild(list);
+        if (group.id !== "summary") {
+          const add = document.createElement("div"); add.className = "group-add"; add.innerHTML = '<input maxlength="6" inputmode="numeric" placeholder="输入6位股票代码"><button type="button">新增</button>';
+          const input = add.querySelector("input"); const addButton = add.querySelector("button");
+          const addSymbol = () => { const code = input.value.trim(); if (!/^\d{6}$/.test(code)) return setWatchlistMessage("股票代码必须为6位数字。", true); if (group.symbols.includes(code)) return setWatchlistMessage("该股票已存在于当前分组。", true); group.symbols.push(code); group.symbols.sort(); input.value = ""; renderWatchlist(); mergeWatchlistRows(); render(); setWatchlistMessage("股票池已修改，请保存。"); };
+          addButton.onclick = addSymbol; input.onkeydown = (event) => { if (event.key === "Enter") addSymbol(); };
+          card.appendChild(add); const actions = document.createElement("div"); actions.className = "group-actions";
+          const rename = document.createElement("button"); rename.className = "secondary"; rename.textContent = "重命名"; rename.onclick = () => { const name = prompt("新的分组名称", group.name)?.trim(); if (!name || groupsPayload.groups.some((item) => item !== group && item.name === name)) return setWatchlistMessage("分组名称不能为空且不得重复。", true); group.name = name; renderWatchlist(); setWatchlistMessage("股票池已修改，请保存。"); };
+          const removeGroup = document.createElement("button"); removeGroup.className = "danger"; removeGroup.textContent = "删除分组"; removeGroup.onclick = () => { if (confirm(`确定删除分组“${group.name}”吗？该分组中的股票不会从其他分组中删除。`)) { groupsPayload.groups = groupsPayload.groups.filter((item) => item !== group); renderWatchlist(); setWatchlistMessage("股票池已修改，请保存。"); } };
+          actions.append(rename, removeGroup); card.appendChild(actions);
+        }
+        groupBoard.appendChild(card);
       }
     }
 
     function readWatchlistPayload(payload) {
+      if (Array.isArray(payload.groups)) { groupsPayload = payload; return normalizeCodes(payload.groups.flatMap((group) => group.symbols || [])); }
       const values = Array.isArray(payload.watchlist) ? payload.watchlist : payload;
       return normalizeCodes(Array.isArray(values) ? values.map((item) => {
         if (typeof item === "string") return item;
@@ -658,6 +694,7 @@
         }
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         watchlist = readWatchlistPayload(await response.json());
+        if (!groupsPayload.groups.length) groupsPayload = { version: 1, groups: [{ id: "default", name: "默认分组", symbols: watchlist }] };
         mergeWatchlistRows();
         renderWatchlist();
         render();
@@ -671,32 +708,13 @@
       }
     }
 
-    function addWatchlistCode() {
-      const code = watchlistInput.value.trim();
-      if (!/^\d{6}$/.test(code)) {
-        setWatchlistMessage("请输入 6 位数字股票代码。", true);
-        return;
-      }
-      watchlist = normalizeCodes([...watchlist, code]);
-      watchlistInput.value = "";
-      mergeWatchlistRows();
-      renderWatchlist();
-      render();
-      setWatchlistMessage("股票池已修改，请保存。");
-    }
-
     async function saveWatchlist() {
-      const next = normalizeCodes(watchlist);
-      if (next.length === 0) {
-        setWatchlistMessage("股票池不能为空。", true);
-        return;
-      }
       saveWatchlistButton.disabled = true;
       try {
         const response = await fetchWithFallback(WATCHLIST_API, {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ watchlist: next }),
+          body: JSON.stringify(groupsPayload),
         });
         const payload = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(payload.error || `HTTP ${response.status}`);
@@ -710,6 +728,16 @@
       } finally {
         saveWatchlistButton.disabled = false;
       }
+    }
+
+    function createGroup() {
+      const name = prompt("请输入分组名称")?.trim();
+      if (!name) return;
+      if (groupsPayload.groups.some((group) => group.name === name)) return setWatchlistMessage("分组名称不得重复。", true);
+      const id = `group-${Date.now()}`;
+      groupsPayload.groups.push({ id, name, symbols: [] });
+      renderWatchlist();
+      setWatchlistMessage("分组已创建，请保存。");
     }
 
     async function triggerCloudScan() {
@@ -775,12 +803,10 @@
 
     searchInput.addEventListener("input", render);
     statusFilter.addEventListener("change", render);
+    groupFilter.addEventListener("change", render);
     refreshButton.addEventListener("click", () => refreshAll({ triggerScan: true }));
-    addWatchlistButton.addEventListener("click", addWatchlistCode);
+    newGroupButton.addEventListener("click", createGroup);
     saveWatchlistButton.addEventListener("click", saveWatchlist);
-    watchlistInput.addEventListener("keydown", (event) => {
-      if (event.key === "Enter") addWatchlistCode();
-    });
     refreshAll();
     window.setInterval(() => refreshAll(), REFRESH_MS);
     window.setInterval(loadStatus, STATUS_REFRESH_MS);

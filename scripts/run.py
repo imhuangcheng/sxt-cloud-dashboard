@@ -18,6 +18,7 @@ from notifier import (
     save_alert_history,
     should_send_alert,
 )
+from watchlist_manager import all_symbols, load_groups, sync_legacy
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -141,7 +142,8 @@ def main() -> int:
     started_at = datetime.now()
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     config = load_json(CONFIG_DIR / "config.json", {})
-    watchlist = load_watchlist(CONFIG_DIR / "watchlist.json")
+    groups = load_groups(CONFIG_DIR / "watchlist_groups.json", CONFIG_DIR / "watchlist.json")
+    watchlist = sync_legacy(groups, CONFIG_DIR / "watchlist.json")
     timezone = ZoneInfo(config.get("timezone", "Asia/Shanghai"))
     now = datetime.now(timezone).replace(tzinfo=None)
     latest_path = DATA_DIR / "latest_signals.json"
@@ -189,7 +191,7 @@ def main() -> int:
     history = load_alert_history(history_path)
     prune_history(history, now)
 
-    stocks = [normalize_stock(raw_stock) for raw_stock in watchlist]
+    stocks = [normalize_stock(raw_stock) for raw_stock in all_symbols(groups)]
     try:
         stock_names = fetch_stock_names(stocks)
     except Exception as exc:  # noqa: BLE001
