@@ -3,12 +3,14 @@ from __future__ import annotations
 import json
 import logging
 import os
+import tempfile
 from datetime import datetime, timedelta, time
 from pathlib import Path
 from typing import Any
 from zoneinfo import ZoneInfo
 
 from calc_sxt import calculate_sxt
+from chart import save_15m_chart
 from fetch_data import fetch_15m, fetch_daily, fetch_stock_name, fetch_stock_names, normalize_stock
 from notifier import (
     load_alert_history,
@@ -248,7 +250,23 @@ def main() -> int:
                 and item["status"] == "ALERT"
                 and should_send_alert(history, stock.code, item["last_15m_time"], now, dedup_minutes)
             ):
-                ok, error = notify_signal(item, data_source)
+                chart_path = None
+                try:
+                    chart_path = save_15m_chart(
+                        minute15,
+                        item,
+                        Path(tempfile.gettempdir()) / f"sxt_{stock.code}_{str(item['last_15m_time']).replace(':', '').replace(' ', '_')}.png",
+                    )
+                except Exception as chart_exc:  # noqa: BLE001
+                    LOGGER.exception("15m chart generation failed for %s", stock.code)
+                    item["error"] = f"15分钟K截图生成失败: {chart_exc}"
+                ok, error = notify_signal(
+                    item,
+                    data_source,
+                    chart_path=chart_path,
+                    enable_serverchan=bool(config.get("enable_serverchan", True)),
+                    enable_wecom=bool(config.get("enable_wecom", True)),
+                )
                 record_alert(
                     history,
                     stock.code,

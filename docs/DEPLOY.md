@@ -32,6 +32,13 @@ Name: SERVERCHAN_SEND_KEY
 Value: 你的 Server 酱 sendkey
 ```
 
+新增企业微信机器人 webhook：
+
+```text
+Name: WECHAT_WORK_BOT_URL
+Value: 企业微信群机器人 webhook 地址
+```
+
 不要把真实 sendkey 写入 `config/serverchan.json` 或其他仓库文件。
 
 Netlify 侧的 `GITHUB_TOKEN` 需要允许读取/写入 Contents，并允许触发 Actions workflow dispatch；页面“刷新”按钮会触发本项目 GitHub Actions 的 `force_scan=true`。
@@ -91,7 +98,7 @@ Actions -> SXT cloud monitor -> Run workflow
 
 ### 没有收到 Server 酱通知
 
-检查 `SERVERCHAN_SEND_KEY` 是否配置在 GitHub Actions Secret 中。还要确认同一只股票同时满足 `日K SXT = 2` 和 `15分钟K SXT = 2`。
+检查 `SERVERCHAN_SEND_KEY` 和 `WECHAT_WORK_BOT_URL` 是否配置在 GitHub Actions Secrets 中。还要确认同一只股票同时满足 `日K SXT = 2` 和 `15分钟K SXT = 2`。企业微信会先推送文字，再推送最近 80 根 15 分钟 K 线截图。
 
 ### Actions 运行了但没有提交
 

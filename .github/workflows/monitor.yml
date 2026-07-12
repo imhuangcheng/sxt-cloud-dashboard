@@ -19,6 +19,7 @@ on:
       - "scripts/**"
       - "config/config.json"
       - "config/watchlist.json"
+      - "config/watchlist_groups.json"
       - "config/refresh.json"
       - "requirements.txt"
 
@@ -47,6 +48,7 @@ jobs:
       - name: Run monitor
         env:
           SERVERCHAN_SEND_KEY: ${{ secrets.SERVERCHAN_SEND_KEY }}
+          WECHAT_WORK_BOT_URL: ${{ secrets.WECHAT_WORK_BOT_URL }}
           SXT_FORCE_SCAN: ${{ github.event_name == 'push' && 'true' || github.event.inputs.force_scan || 'false' }}
         run: python scripts/run.py
 
