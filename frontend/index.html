@@ -181,6 +181,15 @@
     .group-add { display: flex; gap: 6px; }
     .group-add input { min-width: 0; width: 100%; }
     .group-add button { flex: 0 0 auto; }
+    .group-tabs-wrap { margin: 16px 0 0; border: 1px solid var(--line); border-bottom: 0; border-radius: 8px 8px 0 0; background: var(--panel); overflow-x: auto; }
+    .group-tabs { display: flex; align-items: stretch; gap: 4px; min-width: max-content; padding: 6px 10px 0; }
+    .group-tab { height: 42px; border: 0; border-bottom: 3px solid transparent; border-radius: 6px 6px 0 0; background: transparent; color: var(--muted); padding: 0 18px; font-weight: 700; white-space: nowrap; }
+    .group-tab:hover { background: var(--gray-bg); color: var(--text); }
+    .group-tab.active { border-bottom-color: var(--blue); background: var(--blue-bg); color: var(--blue); }
+    .group-tab.custom { cursor: grab; }
+    .group-tab.custom:active { cursor: grabbing; }
+    .group-tab.dragging { opacity: .45; }
+    .group-tab-hint { color: var(--muted); font-size: 12px; padding: 0 10px 8px; }
 
     .watchlist-list {
       display: flex;
@@ -383,7 +392,7 @@
           <span class="meta" id="watchlistCount">0 个分组 / 0 只</span>
         </div>
         <div class="panel-body">
-          <div class="controls" style="margin-bottom:12px"><button id="newGroupButton" type="button">+ 新建分组</button><button class="secondary" id="saveWatchlistButton" type="button">保存变更</button><select id="groupFilter"><option value="">全部分组</option></select></div>
+          <div class="controls" style="margin-bottom:12px"><button id="newGroupButton" type="button">+ 新建分组</button><button class="secondary" id="saveWatchlistButton" type="button">保存变更</button></div>
           <div class="group-board" id="groupBoard"></div>
           <div class="watchlist-message" id="watchlistMessage"></div>
         </div>
@@ -391,6 +400,10 @@
     </section>
 
     <section class="table-wrap">
+      <div class="group-tabs-wrap">
+        <div class="group-tabs" id="groupTabs" role="tablist" aria-label="股票分组标签"></div>
+        <div class="group-tab-hint">点击标签切换股票分组；拖动自定义标签可以调整顺序。</div>
+      </div>
       <table>
         <thead>
           <tr>
@@ -435,6 +448,8 @@
     let rows = [];
     let watchlist = [];
     let groupsPayload = { version: 1, groups: [] };
+    let selectedTabId = "summary";
+    let draggedGroupId = "";
 
     const updatedAt = document.getElementById("updatedAt");
     const message = document.getElementById("message");
@@ -453,8 +468,8 @@
     const statusMessage = document.getElementById("statusMessage");
     const newGroupButton = document.getElementById("newGroupButton");
     const saveWatchlistButton = document.getElementById("saveWatchlistButton");
-    const groupFilter = document.getElementById("groupFilter");
     const groupBoard = document.getElementById("groupBoard");
+    const groupTabs = document.getElementById("groupTabs");
     const watchlistCount = document.getElementById("watchlistCount");
     const watchlistMessage = document.getElementById("watchlistMessage");
 
@@ -559,16 +574,22 @@
       return groupsPayload.groups.filter((group) => group.symbols.includes(code)).map((group) => group.name);
     }
 
+    function selectedSymbols() {
+      if (selectedTabId === "summary") return new Set(watchlist);
+      const group = groupsPayload.groups.find((item) => item.id === selectedTabId);
+      return new Set(group ? group.symbols : watchlist);
+    }
+
     function render() {
       const keyword = searchInput.value.trim().toLowerCase();
       const status = statusFilter.value;
-      const selectedGroup = groupFilter.value;
+      const symbolsInTab = selectedSymbols();
       const filtered = rows.filter((row) => {
         const hitKeyword = !keyword
           || String(row.code || "").toLowerCase().includes(keyword)
           || stockName(row).toLowerCase().includes(keyword);
         const hitStatus = !status || row.status === status;
-        const hitGroup = !selectedGroup || groupsPayload.groups.find((group) => group.id === selectedGroup)?.symbols.includes(stockCode(row));
+        const hitGroup = symbolsInTab.has(stockCode(row));
         return hitKeyword && hitStatus && hitGroup;
       });
 
@@ -640,13 +661,49 @@
       watchlistMessage.className = `watchlist-message ${isError ? "error" : ""}`;
     }
 
+    function renderGroupTabs() {
+      if (selectedTabId !== "summary" && !groupsPayload.groups.some((group) => group.id === selectedTabId)) selectedTabId = "summary";
+      groupTabs.innerHTML = "";
+      const summary = document.createElement("button");
+      summary.type = "button";
+      summary.className = `group-tab ${selectedTabId === "summary" ? "active" : ""}`;
+      summary.setAttribute("role", "tab");
+      summary.setAttribute("aria-selected", selectedTabId === "summary" ? "true" : "false");
+      summary.textContent = `汇总（${watchlist.length}）`;
+      summary.onclick = () => { selectedTabId = "summary"; renderGroupTabs(); render(); };
+      groupTabs.appendChild(summary);
+      for (const group of groupsPayload.groups) {
+        const tab = document.createElement("button");
+        tab.type = "button";
+        tab.draggable = true;
+        tab.dataset.groupId = group.id;
+        tab.className = `group-tab custom ${selectedTabId === group.id ? "active" : ""}`;
+        tab.setAttribute("role", "tab");
+        tab.setAttribute("aria-selected", selectedTabId === group.id ? "true" : "false");
+        tab.textContent = `${group.name}（${group.symbols.length}）`;
+        tab.onclick = () => { selectedTabId = group.id; renderGroupTabs(); render(); };
+        tab.ondragstart = (event) => { draggedGroupId = group.id; tab.classList.add("dragging"); event.dataTransfer.effectAllowed = "move"; };
+        tab.ondragend = () => { draggedGroupId = ""; tab.classList.remove("dragging"); };
+        tab.ondragover = (event) => { event.preventDefault(); event.dataTransfer.dropEffect = "move"; };
+        tab.ondrop = (event) => {
+          event.preventDefault();
+          if (!draggedGroupId || draggedGroupId === group.id) return;
+          const from = groupsPayload.groups.findIndex((item) => item.id === draggedGroupId);
+          const to = groupsPayload.groups.findIndex((item) => item.id === group.id);
+          if (from < 0 || to < 0) return;
+          const [moved] = groupsPayload.groups.splice(from, 1);
+          groupsPayload.groups.splice(to, 0, moved);
+          renderGroupTabs(); renderWatchlist();
+          setWatchlistMessage("标签顺序已修改，请保存。");
+        };
+        groupTabs.appendChild(tab);
+      }
+    }
+
     function renderWatchlist() {
       groupBoard.innerHTML = "";
       watchlistCount.textContent = `${groupsPayload.groups.length} 个分组 / ${watchlist.length} 只`;
-      groupFilter.innerHTML = '<option value="">全部分组</option>';
-      for (const group of groupsPayload.groups) {
-        groupFilter.insertAdjacentHTML("beforeend", `<option value="${escapeHtml(group.id)}">${escapeHtml(group.name)}</option>`);
-      }
+      renderGroupTabs();
       const all = { id: "summary", name: "汇总", symbols: watchlist };
       for (const group of [all, ...groupsPayload.groups]) {
         const card = document.createElement("div"); card.className = `group-card ${group.id === "summary" ? "summary" : ""}`;
@@ -803,7 +860,6 @@
 
     searchInput.addEventListener("input", render);
     statusFilter.addEventListener("change", render);
-    groupFilter.addEventListener("change", render);
     refreshButton.addEventListener("click", () => refreshAll({ triggerScan: true }));
     newGroupButton.addEventListener("click", createGroup);
     saveWatchlistButton.addEventListener("click", saveWatchlist);
