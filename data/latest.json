@@ -1,33 +1,34 @@
 {
-  "updated_at": "2026-07-13 20:18:38",
+  "updated_at": "2026-07-13 22:46:00",
   "is_trading_time": false,
-  "message": "Outside A-share trading sessions, scan skipped.",
+  "force_scan": true,
+  "message": "Force scan completed with latest available data.",
   "items": [
     {
       "code": "002709",
       "name": "天赐材料",
       "market": "sz",
       "daily_sxt": -2,
-      "minute15_sxt": 2,
+      "minute15_sxt": 0,
       "status": "WATCH",
-      "last_daily_time": "2026-07-10 00:00:00",
-      "last_15m_time": "2026-07-10 15:00:00",
+      "last_daily_time": "2026-07-13 00:00:00",
+      "last_15m_time": "2026-07-13 15:00:00",
       "error": "",
       "daily_signal": "NEGATIVE",
-      "minute15_signal": "BUY"
+      "minute15_signal": "NEUTRAL"
     },
     {
       "code": "002876",
       "name": "三利谱",
       "market": "sz",
-      "daily_sxt": 2,
-      "minute15_sxt": 2,
-      "status": "ALERT",
-      "last_daily_time": "2026-07-10 00:00:00",
-      "last_15m_time": "2026-07-10 15:00:00",
+      "daily_sxt": 0,
+      "minute15_sxt": 0,
+      "status": "WATCH",
+      "last_daily_time": "2026-07-13 00:00:00",
+      "last_15m_time": "2026-07-13 15:00:00",
       "error": "",
-      "daily_signal": "BUY",
-      "minute15_signal": "BUY"
+      "daily_signal": "NEUTRAL",
+      "minute15_signal": "NEUTRAL"
     }
   ]
 }
