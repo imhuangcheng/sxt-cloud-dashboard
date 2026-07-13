@@ -1,5 +1,6 @@
 {
-  "updated_at": "2026-07-13 22:46:00",
+  "updated_at": "2026-07-13 23:23:23",
+  "data_updated_at": "2026-07-13 23:23:23",
   "is_trading_time": false,
   "force_scan": true,
   "message": "Force scan completed with latest available data.",
