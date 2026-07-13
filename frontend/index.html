@@ -362,8 +362,12 @@
               <div class="status-value" id="cloudStatus">-</div>
             </div>
             <div class="status-item">
-              <div class="status-label">最近扫描时间</div>
+              <div class="status-label">状态更新时间</div>
               <div class="status-value" id="lastScan">-</div>
+            </div>
+            <div class="status-item">
+              <div class="status-label">行情数据更新时间</div>
+              <div class="status-value" id="dataUpdatedAt">-</div>
             </div>
             <div class="status-item">
               <div class="status-label">下次扫描时间</div>
@@ -461,6 +465,7 @@
     const workflowBadge = document.getElementById("workflowBadge");
     const cloudStatus = document.getElementById("cloudStatus");
     const lastScan = document.getElementById("lastScan");
+    const dataUpdatedAt = document.getElementById("dataUpdatedAt");
     const nextScan = document.getElementById("nextScan");
     const stockCount = document.getElementById("stockCount");
     const signalCount = document.getElementById("signalCount");
@@ -629,12 +634,16 @@
       workflowBadge.className = `badge ${payload.workflow === "failed" ? "bad" : "buy"}`;
       cloudStatus.textContent = payload.status || "-";
       lastScan.textContent = payload.last_scan_time || payload.last_scan || "-";
+      dataUpdatedAt.textContent = payload.data_updated_at || payload.last_daily_time || payload.last_15m_time || "-";
       nextScan.textContent = payload.next_scan_time || payload.next_scan || "-";
       stockCount.textContent = formatValue(payload.stocks);
       signalCount.textContent = formatValue(payload.signals);
       durationSeconds.textContent = payload.duration_seconds === undefined ? "-" : `${payload.duration_seconds}s`;
       statusMessage.className = `status-message ${payload.last_error ? "error" : ""}`;
-      statusMessage.textContent = payload.last_error || `数据源：${payload.data_source || "-"}　版本：${payload.version || "-"}`;
+      const skipped = payload.message && payload.message.includes("scan skipped");
+      statusMessage.textContent = payload.last_error || (skipped
+        ? `${payload.message}　行情时间以表格中的日K/15分钟K时间为准。`
+        : `数据源：${payload.data_source || "-"}　版本：${payload.version || "-"}`);
     }
 
     async function loadStatus() {
@@ -647,6 +656,7 @@
         workflowBadge.className = "badge neutral";
         cloudStatus.textContent = "-";
         lastScan.textContent = "-";
+        dataUpdatedAt.textContent = "-";
         nextScan.textContent = "-";
         stockCount.textContent = "-";
         signalCount.textContent = "-";
