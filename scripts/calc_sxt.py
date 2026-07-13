@@ -198,8 +198,9 @@ def calculate_sxt(data: pd.DataFrame, min_bars: int = 80) -> dict[str, Any]:
 
     jyd1 = IF(bldi1 | bldi2 | bldi3, 1, IF(yjding2, -1, 0))
     jyd2 = VALUEWHEN(jyd1, jyd1).fillna(0)
+    jyd3 = IF(jyd2.eq(1) & (close > yjdip0), 1, -1)
     sxt_multiplier = IF((close > yjdingp0) & db1.eq(-1), -1, 1)
-    sxt = ((jyd2 + db1) * sxt_multiplier).fillna(0).astype(int)
+    sxt = ((jyd3 + db1) * sxt_multiplier).fillna(0).astype(int)
 
     last_time = pd.to_datetime(df.iloc[-1]["datetime"]).strftime("%Y-%m-%d %H:%M:%S")
     latest = int(sxt.iloc[-1])
