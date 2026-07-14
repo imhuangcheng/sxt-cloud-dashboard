@@ -81,7 +81,8 @@ exports.handler = async (event) => {
     const response = await dispatchMonitorWorkflow();
     if (!response.ok) {
       if (response.status === 401 || response.status === 403) {
-        throw new Error("Netlify 的 GITHUB_TOKEN 没有触发 GitHub Actions 的权限，请授予 Actions: Read and write 后重试");
+        const detail = response.payload.message ? `（GitHub：${response.payload.message}）` : "";
+        throw new Error(`Netlify 的 GITHUB_TOKEN 无法触发 GitHub Actions，请检查生产环境变量和 Actions: Read and write 权限${detail}`);
       }
       throw new Error(response.payload.message || response.payload.error || `GitHub API ${response.status}`);
     }
