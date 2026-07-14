@@ -1,6 +1,6 @@
 {
-  "updated_at": "2026-07-14 14:17:32",
-  "data_updated_at": "2026-07-14 14:17:32",
+  "updated_at": "2026-07-14 14:47:03",
+  "data_updated_at": "2026-07-14 14:47:03",
   "is_trading_time": true,
   "force_scan": true,
   "message": "Scan completed.",
@@ -13,7 +13,7 @@
       "minute15_sxt": -2,
       "status": "WATCH",
       "last_daily_time": "2026-07-14 00:00:00",
-      "last_15m_time": "2026-07-14 14:30:00",
+      "last_15m_time": "2026-07-14 15:00:00",
       "error": "",
       "daily_signal": "NEGATIVE",
       "minute15_signal": "NEGATIVE"
@@ -23,13 +23,13 @@
       "name": "三利谱",
       "market": "sz",
       "daily_sxt": 0,
-      "minute15_sxt": -2,
+      "minute15_sxt": 2,
       "status": "WATCH",
       "last_daily_time": "2026-07-14 00:00:00",
-      "last_15m_time": "2026-07-14 14:30:00",
+      "last_15m_time": "2026-07-14 15:00:00",
       "error": "",
       "daily_signal": "NEUTRAL",
-      "minute15_signal": "NEGATIVE"
+      "minute15_signal": "BUY"
     },
     {
       "code": "301257",
@@ -39,7 +39,7 @@
       "minute15_sxt": 2,
       "status": "ALERT",
       "last_daily_time": "2026-07-14 00:00:00",
-      "last_15m_time": "2026-07-14 14:30:00",
+      "last_15m_time": "2026-07-14 15:00:00",
       "error": "",
       "daily_signal": "BUY",
       "minute15_signal": "BUY"
@@ -49,13 +49,13 @@
       "name": "中国人寿",
       "market": "sh",
       "daily_sxt": 2,
-      "minute15_sxt": 2,
-      "status": "ALERT",
+      "minute15_sxt": -2,
+      "status": "WATCH",
       "last_daily_time": "2026-07-14 00:00:00",
-      "last_15m_time": "2026-07-14 14:30:00",
+      "last_15m_time": "2026-07-14 15:00:00",
       "error": "",
       "daily_signal": "BUY",
-      "minute15_signal": "BUY"
+      "minute15_signal": "NEGATIVE"
     }
   ]
 }
