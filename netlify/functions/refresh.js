@@ -80,6 +80,9 @@ exports.handler = async (event) => {
   try {
     const response = await dispatchMonitorWorkflow();
     if (!response.ok) {
+      if (response.status === 401 || response.status === 403) {
+        throw new Error("Netlify 的 GITHUB_TOKEN 没有触发 GitHub Actions 的权限，请授予 Actions: Read and write 后重试");
+      }
       throw new Error(response.payload.message || response.payload.error || `GitHub API ${response.status}`);
     }
 

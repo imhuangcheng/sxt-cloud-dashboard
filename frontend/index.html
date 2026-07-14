@@ -873,7 +873,7 @@
     refreshButton.addEventListener("click", () => refreshAll({ triggerScan: true }));
     newGroupButton.addEventListener("click", createGroup);
     saveWatchlistButton.addEventListener("click", saveWatchlist);
-    refreshAll();
+    refreshAll({ triggerScan: true });
     window.setInterval(() => refreshAll(), REFRESH_MS);
     window.setInterval(loadStatus, STATUS_REFRESH_MS);
   </script>
