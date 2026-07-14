@@ -1,8 +1,8 @@
 {
-  "updated_at": "2026-07-14 15:28:46",
-  "data_updated_at": "2026-07-14 15:28:46",
+  "updated_at": "2026-07-14 15:29:30",
+  "data_updated_at": "2026-07-14 15:29:30",
   "is_trading_time": true,
-  "force_scan": true,
+  "force_scan": false,
   "message": "Scan completed.",
   "items": [
     {
