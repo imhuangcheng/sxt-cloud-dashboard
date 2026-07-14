@@ -827,6 +827,15 @@
       "sent_at": "2026-07-14 15:18:02",
       "status": "failed",
       "error": "企业微信文字: unknown url type: 'Stage 8 Lite config/config.json 中的 notification.wechat_webhook 值'; 企业微信截图: unknown url type: 'Stage 8 Lite config/config.json 中的 notification.wechat_webhook 值'"
+    },
+    {
+      "key": "301257|2026-07-14 15:00:00",
+      "code": "301257",
+      "name": "-",
+      "minute15_time": "2026-07-14 15:00:00",
+      "sent_at": "2026-07-14 15:19:12",
+      "status": "failed",
+      "error": "企业微信文字: unknown url type: 'Stage 8 Lite config/config.json 中的 notification.wechat_webhook 值'; 企业微信截图: unknown url type: 'Stage 8 Lite config/config.json 中的 notification.wechat_webhook 值'"
     }
   ]
 }
