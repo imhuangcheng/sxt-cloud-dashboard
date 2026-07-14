@@ -1,5 +1,5 @@
 {
-  "requested_at": "2026-07-03T05:34:14.751Z",
+  "requested_at": "2026-07-14T13:50:00+08:00",
   "force_scan": true,
-  "reason": "Resource not accessible by personal access token"
+  "reason": "Manual retry requested from dashboard"
 }
