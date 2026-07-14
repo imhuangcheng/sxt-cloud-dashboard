@@ -1,6 +1,6 @@
 {
-  "updated_at": "2026-07-14 14:14:22",
-  "data_updated_at": "2026-07-14 14:14:22",
+  "updated_at": "2026-07-14 14:15:18",
+  "data_updated_at": "2026-07-14 14:15:18",
   "is_trading_time": true,
   "force_scan": true,
   "message": "Scan completed.",
@@ -13,7 +13,7 @@
       "minute15_sxt": -2,
       "status": "WATCH",
       "last_daily_time": "2026-07-14 00:00:00",
-      "last_15m_time": "2026-07-14 14:15:00",
+      "last_15m_time": "2026-07-14 14:30:00",
       "error": "",
       "daily_signal": "NEGATIVE",
       "minute15_signal": "NEGATIVE"
@@ -26,7 +26,7 @@
       "minute15_sxt": -2,
       "status": "WATCH",
       "last_daily_time": "2026-07-14 00:00:00",
-      "last_15m_time": "2026-07-14 14:15:00",
+      "last_15m_time": "2026-07-14 14:30:00",
       "error": "",
       "daily_signal": "NEUTRAL",
       "minute15_signal": "NEGATIVE"
@@ -39,7 +39,7 @@
       "minute15_sxt": 2,
       "status": "ALERT",
       "last_daily_time": "2026-07-14 00:00:00",
-      "last_15m_time": "2026-07-14 14:15:00",
+      "last_15m_time": "2026-07-14 14:30:00",
       "error": "",
       "daily_signal": "BUY",
       "minute15_signal": "BUY"
@@ -52,7 +52,7 @@
       "minute15_sxt": 2,
       "status": "ALERT",
       "last_daily_time": "2026-07-14 00:00:00",
-      "last_15m_time": "2026-07-14 14:15:00",
+      "last_15m_time": "2026-07-14 14:30:00",
       "error": "",
       "daily_signal": "BUY",
       "minute15_signal": "BUY"
