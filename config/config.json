@@ -2,8 +2,8 @@
   "timezone": "Asia/Shanghai",
   "scan_interval_minutes": 5,
   "trading_sessions": [
-    ["09:00", "11:55"],
-    ["13:00", "15:55"]
+    ["09:30", "11:30"],
+    ["13:00", "15:00"]
   ],
   "enable_serverchan": true,
   "enable_wecom": true,

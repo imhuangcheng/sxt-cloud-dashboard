@@ -94,6 +94,7 @@ def build_status_payload(
     force_scan: bool = False,
     message: str = "",
     workflow: str = "success",
+    data_updated_at: str = "",
 ) -> dict[str, Any]:
     last_scan = now.strftime("%Y-%m-%d %H:%M:%S")
     next_scan = next_scan_time(now, int(config.get("scan_interval_minutes", 15)))
@@ -101,6 +102,7 @@ def build_status_payload(
         "status": "running" if workflow == "success" else "error",
         "last_scan": last_scan,
         "last_scan_time": last_scan,
+        "data_updated_at": data_updated_at,
         "last_daily_time": last_daily_time,
         "last_15m_time": last_15m_time,
         "is_trading_time": is_trading,
@@ -129,6 +131,7 @@ def status_for(daily_sxt: int | None, minute15_sxt: int | None, target_daily: in
 def build_non_trading_payload(now: datetime, previous: dict[str, Any]) -> dict[str, Any]:
     return {
         "updated_at": now.strftime("%Y-%m-%d %H:%M:%S"),
+        "data_updated_at": previous.get("data_updated_at", ""),
         "is_trading_time": False,
         "message": "Outside A-share trading sessions, scan skipped.",
         "items": previous.get("items", []),
@@ -153,6 +156,7 @@ def main() -> int:
     status_path = DATA_DIR / "status.json"
     history_path = DATA_DIR / "alert_history.json"
     previous_latest = load_json(latest_path, {"items": []})
+    previous_status = load_json(status_path, {})
     force_scan = os.getenv("SXT_FORCE_SCAN", "").strip().lower() in {"1", "true", "yes"}
     trading_now = is_trading_time(now, config.get("trading_sessions", []))
 
@@ -172,6 +176,7 @@ def main() -> int:
                 duration_seconds=(datetime.now() - started_at).total_seconds(),
                 last_daily_time=latest_time(previous_items, "last_daily_time"),
                 last_15m_time=latest_time(previous_items, "last_15m_time"),
+                data_updated_at=str(previous_status.get("data_updated_at", "") or previous_latest.get("data_updated_at", "")),
                 is_trading=trading_now,
                 force_scan=force_scan,
                 message="Outside A-share trading sessions, scan skipped because force_scan is false.",
@@ -247,6 +252,7 @@ def main() -> int:
 
             if (
                 config.get("enable_serverchan", True)
+                and trading_now
                 and item["status"] == "ALERT"
                 and should_send_alert(history, stock.code, item["last_15m_time"], now, dedup_minutes)
             ):
@@ -291,6 +297,7 @@ def main() -> int:
 
     payload = {
         "updated_at": now.strftime("%Y-%m-%d %H:%M:%S"),
+        "data_updated_at": now.strftime("%Y-%m-%d %H:%M:%S"),
         "is_trading_time": trading_now,
         "force_scan": force_scan,
         "message": "Force scan completed with latest available data." if force_scan and not trading_now else "Scan completed.",
@@ -310,6 +317,7 @@ def main() -> int:
             last_error="; ".join(item.get("error", "") for item in items if item.get("status") == "ERROR")[:300],
             last_daily_time=latest_time(items, "last_daily_time"),
             last_15m_time=latest_time(items, "last_15m_time"),
+            data_updated_at=payload["data_updated_at"],
             is_trading=trading_now,
             force_scan=force_scan,
             message=payload["message"],

@@ -63,6 +63,31 @@ async function dispatchMonitorWorkflow() {
   });
 }
 
+async function triggerByRefreshCommit() {
+  const { branch } = githubConfig();
+  const current = await githubRequest(`/contents/config/refresh.json?ref=${encodeURIComponent(branch)}`);
+  if (!current.ok) return current;
+  const currentContent = String(current.payload.content || "").replace(/\s/g, "");
+  let payload;
+  try {
+    payload = JSON.parse(Buffer.from(currentContent, "base64").toString("utf8"));
+  } catch (error) {
+    return { ok: false, status: 500, payload: { message: `无法解析 config/refresh.json：${error.message}` }, branch };
+  }
+  payload.requested_at = new Date().toISOString();
+  payload.force_scan = true;
+  payload.reason = "Dashboard requested scan";
+  return githubRequest("/contents/config/refresh.json", {
+    method: "PUT",
+    body: JSON.stringify({
+      message: "chore: trigger cloud monitor scan",
+      content: Buffer.from(`${JSON.stringify(payload, null, 2)}\n`, "utf8").toString("base64"),
+      sha: current.payload.sha,
+      branch,
+    }),
+  });
+}
+
 exports.handler = async (event) => {
   if (event.httpMethod === "OPTIONS") {
     return { statusCode: 204, headers: JSON_HEADERS, body: "" };
@@ -80,6 +105,19 @@ exports.handler = async (event) => {
   try {
     const response = await dispatchMonitorWorkflow();
     if (!response.ok) {
+      const fallback = await triggerByRefreshCommit();
+      if (fallback.ok) {
+        return json(202, {
+          ok: true,
+          mode: "github_contents_push",
+          message: "已通过 GitHub 配置提交触发云端强制扫描，完成后会更新数据。",
+        });
+      }
+      if (response.status === 401 || response.status === 403) {
+        const detail = response.payload.message ? `（GitHub：${response.payload.message}）` : "";
+        const fallbackDetail = fallback.payload?.message ? `；回退提交也失败：${fallback.payload.message}` : "";
+        throw new Error(`Netlify 的 GITHUB_TOKEN 无法触发 GitHub Actions，请检查仓库权限${detail}${fallbackDetail}`);
+      }
       throw new Error(response.payload.message || response.payload.error || `GitHub API ${response.status}`);
     }
 
