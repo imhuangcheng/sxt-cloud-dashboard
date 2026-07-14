@@ -1,6 +1,6 @@
 {
-  "updated_at": "2026-07-14 14:54:03",
-  "data_updated_at": "2026-07-14 14:54:03",
+  "updated_at": "2026-07-14 14:55:07",
+  "data_updated_at": "2026-07-14 14:55:07",
   "is_trading_time": true,
   "force_scan": true,
   "message": "Scan completed.",
@@ -49,13 +49,13 @@
       "name": "中国人寿",
       "market": "sh",
       "daily_sxt": 2,
-      "minute15_sxt": -2,
-      "status": "WATCH",
+      "minute15_sxt": 2,
+      "status": "ALERT",
       "last_daily_time": "2026-07-14 00:00:00",
       "last_15m_time": "2026-07-14 15:00:00",
       "error": "",
       "daily_signal": "BUY",
-      "minute15_signal": "NEGATIVE"
+      "minute15_signal": "BUY"
     }
   ]
 }
