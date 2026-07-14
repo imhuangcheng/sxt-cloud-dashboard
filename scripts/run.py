@@ -252,6 +252,7 @@ def main() -> int:
 
             if (
                 config.get("enable_serverchan", True)
+                and trading_now
                 and item["status"] == "ALERT"
                 and should_send_alert(history, stock.code, item["last_15m_time"], now, dedup_minutes)
             ):
