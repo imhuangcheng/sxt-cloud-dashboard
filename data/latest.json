@@ -1,6 +1,6 @@
 {
-  "updated_at": "2026-07-14 13:50:11",
-  "data_updated_at": "2026-07-14 13:50:11",
+  "updated_at": "2026-07-14 13:51:35",
+  "data_updated_at": "2026-07-14 13:51:35",
   "is_trading_time": true,
   "force_scan": true,
   "message": "Scan completed.",
@@ -10,13 +10,13 @@
       "name": "天赐材料",
       "market": "sz",
       "daily_sxt": -2,
-      "minute15_sxt": 0,
+      "minute15_sxt": -2,
       "status": "WATCH",
       "last_daily_time": "2026-07-14 00:00:00",
       "last_15m_time": "2026-07-14 14:00:00",
       "error": "",
       "daily_signal": "NEGATIVE",
-      "minute15_signal": "NEUTRAL"
+      "minute15_signal": "NEGATIVE"
     },
     {
       "code": "002876",
