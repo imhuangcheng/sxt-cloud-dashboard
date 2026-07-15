@@ -1,10 +1,23 @@
 {
-  "updated_at": "2026-07-15 22:59:39",
-  "data_updated_at": "2026-07-15 22:59:39",
+  "updated_at": "2026-07-15 23:00:49",
+  "data_updated_at": "2026-07-15 23:00:49",
   "is_trading_time": false,
   "force_scan": true,
   "message": "Force scan completed with latest available data.",
   "items": [
+    {
+      "code": "002216",
+      "name": "三全食品",
+      "market": "sz",
+      "daily_sxt": 2,
+      "minute15_sxt": 2,
+      "status": "ALERT",
+      "last_daily_time": "2026-07-15 00:00:00",
+      "last_15m_time": "2026-07-15 15:00:00",
+      "error": "",
+      "daily_signal": "BUY",
+      "minute15_signal": "BUY"
+    },
     {
       "code": "002709",
       "name": "天赐材料",
