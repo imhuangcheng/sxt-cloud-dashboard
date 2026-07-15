@@ -1,6 +1,6 @@
 {
-  "updated_at": "2026-07-14 22:51:42",
-  "data_updated_at": "2026-07-14 22:51:42",
+  "updated_at": "2026-07-15 15:00:22",
+  "data_updated_at": "2026-07-15 15:00:22",
   "is_trading_time": false,
   "force_scan": true,
   "message": "Force scan completed with latest available data.",
@@ -9,13 +9,13 @@
       "code": "002709",
       "name": "天赐材料",
       "market": "sz",
-      "daily_sxt": -2,
+      "daily_sxt": 0,
       "minute15_sxt": -2,
       "status": "WATCH",
-      "last_daily_time": "2026-07-14 00:00:00",
-      "last_15m_time": "2026-07-14 15:00:00",
+      "last_daily_time": "2026-07-15 00:00:00",
+      "last_15m_time": "2026-07-15 15:00:00",
       "error": "",
-      "daily_signal": "NEGATIVE",
+      "daily_signal": "NEUTRAL",
       "minute15_signal": "NEGATIVE"
     },
     {
@@ -23,26 +23,26 @@
       "name": "三利谱",
       "market": "sz",
       "daily_sxt": 0,
-      "minute15_sxt": 2,
+      "minute15_sxt": 0,
       "status": "WATCH",
-      "last_daily_time": "2026-07-14 00:00:00",
-      "last_15m_time": "2026-07-14 15:00:00",
+      "last_daily_time": "2026-07-15 00:00:00",
+      "last_15m_time": "2026-07-15 15:00:00",
       "error": "",
       "daily_signal": "NEUTRAL",
-      "minute15_signal": "BUY"
+      "minute15_signal": "NEUTRAL"
     },
     {
       "code": "301257",
       "name": "普蕊斯",
       "market": "sz",
       "daily_sxt": 2,
-      "minute15_sxt": 2,
-      "status": "ALERT",
-      "last_daily_time": "2026-07-14 00:00:00",
-      "last_15m_time": "2026-07-14 15:00:00",
+      "minute15_sxt": -2,
+      "status": "WATCH",
+      "last_daily_time": "2026-07-15 00:00:00",
+      "last_15m_time": "2026-07-15 15:00:00",
       "error": "",
       "daily_signal": "BUY",
-      "minute15_signal": "BUY"
+      "minute15_signal": "NEGATIVE"
     },
     {
       "code": "601628",
@@ -51,8 +51,8 @@
       "daily_sxt": 2,
       "minute15_sxt": -2,
       "status": "WATCH",
-      "last_daily_time": "2026-07-14 00:00:00",
-      "last_15m_time": "2026-07-14 15:00:00",
+      "last_daily_time": "2026-07-15 00:00:00",
+      "last_15m_time": "2026-07-15 15:00:00",
       "error": "",
       "daily_signal": "BUY",
       "minute15_signal": "NEGATIVE"
