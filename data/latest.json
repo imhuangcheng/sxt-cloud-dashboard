@@ -1,53 +1,61 @@
 {
-  "updated_at": "2026-07-15 16:24:16",
-  "data_updated_at": "2026-07-15 16:24:16",
+  "updated_at": "2026-07-15 16:28:14",
+  "data_updated_at": "2026-07-15 16:28:14",
   "is_trading_time": false,
   "force_scan": true,
   "message": "Force scan completed with latest available data.",
   "items": [
     {
       "code": "002709",
-      "name": "",
+      "name": "天赐材料",
       "market": "sz",
-      "daily_sxt": null,
-      "minute15_sxt": null,
-      "status": "ERROR",
-      "last_daily_time": null,
-      "last_15m_time": null,
-      "error": "HTTPConnectionPool(host='ifzq.gtimg.cn', port=80): Max retries exceeded with url: /appstock/app/fqkline/get?_var=testKline&param=sz002709%2Cday%2C%2C%2C260%2Cqfq (Caused by ConnectTimeoutError(<HTTPConnection(host='ifzq.gtimg.cn', port=80) at 0x7f77419d39e0>, 'Connection to ifzq.gtimg.cn timed out. (connect timeout=12)'))"
+      "daily_sxt": 0,
+      "minute15_sxt": -2,
+      "status": "WATCH",
+      "last_daily_time": "2026-07-15 00:00:00",
+      "last_15m_time": "2026-07-15 15:00:00",
+      "error": "",
+      "daily_signal": "NEUTRAL",
+      "minute15_signal": "NEGATIVE"
     },
     {
       "code": "002876",
-      "name": "",
+      "name": "三利谱",
       "market": "sz",
-      "daily_sxt": null,
-      "minute15_sxt": null,
-      "status": "ERROR",
-      "last_daily_time": null,
-      "last_15m_time": null,
-      "error": "HTTPConnectionPool(host='ifzq.gtimg.cn', port=80): Max retries exceeded with url: /appstock/app/fqkline/get?_var=testKline&param=sz002876%2Cday%2C%2C%2C260%2Cqfq (Caused by ConnectTimeoutError(<HTTPConnection(host='ifzq.gtimg.cn', port=80) at 0x7f7741a161b0>, 'Connection to ifzq.gtimg.cn timed out. (connect timeout=12)'))"
+      "daily_sxt": 0,
+      "minute15_sxt": 0,
+      "status": "WATCH",
+      "last_daily_time": "2026-07-15 00:00:00",
+      "last_15m_time": "2026-07-15 15:00:00",
+      "error": "",
+      "daily_signal": "NEUTRAL",
+      "minute15_signal": "NEUTRAL"
     },
     {
       "code": "301257",
-      "name": "",
+      "name": "普蕊斯",
       "market": "sz",
-      "daily_sxt": null,
-      "minute15_sxt": null,
-      "status": "ERROR",
-      "last_daily_time": null,
-      "last_15m_time": null,
-      "error": "HTTPConnectionPool(host='ifzq.gtimg.cn', port=80): Max retries exceeded with url: /appstock/app/fqkline/get?_var=testKline&param=sz301257%2Cday%2C%2C%2C260%2Cqfq (Caused by ConnectTimeoutError(<HTTPConnection(host='ifzq.gtimg.cn', port=80) at 0x7f7741a17050>, 'Connection to ifzq.gtimg.cn timed out. (connect timeout=12)'))"
+      "daily_sxt": 2,
+      "minute15_sxt": -2,
+      "status": "WATCH",
+      "last_daily_time": "2026-07-15 00:00:00",
+      "last_15m_time": "2026-07-15 15:00:00",
+      "error": "",
+      "daily_signal": "BUY",
+      "minute15_signal": "NEGATIVE"
     },
     {
       "code": "601628",
-      "name": "",
+      "name": "中国人寿",
       "market": "sh",
-      "daily_sxt": null,
-      "minute15_sxt": null,
-      "status": "ERROR",
-      "last_daily_time": null,
-      "last_15m_time": null,
-      "error": "HTTPConnectionPool(host='ifzq.gtimg.cn', port=80): Max retries exceeded with url: /appstock/app/fqkline/get?_var=testKline&param=sh601628%2Cday%2C%2C%2C260%2Cqfq (Caused by ConnectTimeoutError(<HTTPConnection(host='ifzq.gtimg.cn', port=80) at 0x7f7741a16570>, 'Connection to ifzq.gtimg.cn timed out. (connect timeout=12)'))"
+      "daily_sxt": 2,
+      "minute15_sxt": -2,
+      "status": "WATCH",
+      "last_daily_time": "2026-07-15 00:00:00",
+      "last_15m_time": "2026-07-15 15:00:00",
+      "error": "",
+      "daily_signal": "BUY",
+      "minute15_signal": "NEGATIVE"
     }
   ]
 }
