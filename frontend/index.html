@@ -513,6 +513,10 @@
       return [...new Set(codes.map((code) => String(code).trim()).filter(Boolean))].sort();
     }
 
+    function syncWatchlistFromGroups() {
+      watchlist = normalizeCodes(groupsPayload.groups.flatMap((group) => group.symbols || []));
+    }
+
     function candidateUrls(path) {
       const values = [];
       const add = (value) => {
@@ -724,7 +728,11 @@
           row.innerHTML = `<span>${escapeHtml(code)} ${escapeHtml(STOCK_NAME_FALLBACKS[code] || "")}</span>`;
           if (group.id !== "summary") {
             const remove = document.createElement("button"); remove.textContent = "×"; remove.title = `从${group.name}删除`;
-            remove.onclick = () => { group.symbols = group.symbols.filter((item) => item !== code); renderWatchlist(); setWatchlistMessage("股票池已修改，请保存。"); };
+            remove.onclick = () => {
+              group.symbols = group.symbols.filter((item) => item !== code);
+              syncWatchlistFromGroups(); mergeWatchlistRows(); renderWatchlist(); render();
+              setWatchlistMessage("股票池已修改，请保存。");
+            };
             row.appendChild(remove);
           }
           list.appendChild(row);
@@ -733,11 +741,11 @@
         if (group.id !== "summary") {
           const add = document.createElement("div"); add.className = "group-add"; add.innerHTML = '<input maxlength="6" inputmode="numeric" placeholder="输入6位股票代码"><button type="button">新增</button>';
           const input = add.querySelector("input"); const addButton = add.querySelector("button");
-          const addSymbol = () => { const code = input.value.trim(); if (!/^\d{6}$/.test(code)) return setWatchlistMessage("股票代码必须为6位数字。", true); if (group.symbols.includes(code)) return setWatchlistMessage("该股票已存在于当前分组。", true); group.symbols.push(code); group.symbols.sort(); input.value = ""; renderWatchlist(); mergeWatchlistRows(); render(); setWatchlistMessage("股票池已修改，请保存。"); };
+          const addSymbol = () => { const code = input.value.trim(); if (!/^\d{6}$/.test(code)) return setWatchlistMessage("股票代码必须为6位数字。", true); if (group.symbols.includes(code)) return setWatchlistMessage("该股票已存在于当前分组。", true); group.symbols.push(code); group.symbols.sort(); input.value = ""; syncWatchlistFromGroups(); mergeWatchlistRows(); renderWatchlist(); render(); setWatchlistMessage("股票池已修改，请保存。"); };
           addButton.onclick = addSymbol; input.onkeydown = (event) => { if (event.key === "Enter") addSymbol(); };
           card.appendChild(add); const actions = document.createElement("div"); actions.className = "group-actions";
           const rename = document.createElement("button"); rename.className = "secondary"; rename.textContent = "重命名"; rename.onclick = () => { const name = prompt("新的分组名称", group.name)?.trim(); if (!name || groupsPayload.groups.some((item) => item !== group && item.name === name)) return setWatchlistMessage("分组名称不能为空且不得重复。", true); group.name = name; renderWatchlist(); setWatchlistMessage("股票池已修改，请保存。"); };
-          const removeGroup = document.createElement("button"); removeGroup.className = "danger"; removeGroup.textContent = "删除分组"; removeGroup.onclick = () => { if (confirm(`确定删除分组“${group.name}”吗？该分组中的股票不会从其他分组中删除。`)) { groupsPayload.groups = groupsPayload.groups.filter((item) => item !== group); renderWatchlist(); setWatchlistMessage("股票池已修改，请保存。"); } };
+          const removeGroup = document.createElement("button"); removeGroup.className = "danger"; removeGroup.textContent = "删除分组"; removeGroup.onclick = () => { if (confirm(`确定删除分组“${group.name}”吗？该分组中的股票不会从其他分组中删除。`)) { groupsPayload.groups = groupsPayload.groups.filter((item) => item !== group); syncWatchlistFromGroups(); mergeWatchlistRows(); renderWatchlist(); render(); setWatchlistMessage("股票池已修改，请保存。"); } };
           actions.append(rename, removeGroup); card.appendChild(actions);
         }
         groupBoard.appendChild(card);
