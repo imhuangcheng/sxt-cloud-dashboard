@@ -41,17 +41,11 @@ Value: 企业微信群机器人 webhook 地址
 
 不要把真实 sendkey 写入 `config/serverchan.json` 或其他仓库文件。
 
-Netlify 侧的 `GITHUB_TOKEN` 需要允许读取/写入 Contents，并允许触发 Actions workflow dispatch；页面“刷新”按钮会触发本项目 GitHub Actions 的 `force_scan=true`。
+Netlify 侧的 `GITHUB_TOKEN` 需要允许读取/写入 Contents。页面“刷新”按钮只重新读取 GitHub Actions 已提交的结果，不会触发扫描；通知只由 GitHub Actions 实际运行结果决定。
 
 ## 3. 启用 GitHub Actions
 
-进入仓库的 `Actions` 页面，允许 workflow 运行。定时任务使用 UTC 时间：
-
-```text
-*/15 1-3,5-7 * * 1-5
-```
-
-这覆盖 A 股交易日的主要交易时段。脚本内部还会按 `config/config.json` 的 Asia/Shanghai 交易时段再次判断，非交易时段会正常退出。
+进入仓库的 `Actions` 页面，允许 workflow 运行。定时任务的运行频率以 `.github/workflows/monitor.yml` 中当前实际配置为准，不在部署文档中重复假设固定分钟数。脚本内部还会按 `config/config.json` 的 Asia/Shanghai 交易时段再次判断，非交易时段会正常退出。
 
 ## 4. 手动触发一次扫描
 
