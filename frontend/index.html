@@ -433,7 +433,6 @@
     const STATUS_URL = "../data/status.json";
     const WATCHLIST_API = "/.netlify/functions/watchlist";
     const WATCHLIST_FALLBACK_URL = "../config/watchlist_groups.json";
-    const REFRESH_API = "/.netlify/functions/refresh";
     const PROD_ORIGIN = "https://sxt-cloud.netlify.app";
     const MONITOR_DETAIL_URL = "https://hc-dual-period-monitor.netlify.app/";
     const REFRESH_MS = 60000;
@@ -815,17 +814,6 @@
       setWatchlistMessage("分组已创建，请保存。");
     }
 
-    async function triggerCloudScan() {
-      const response = await fetchWithFallback(REFRESH_API, {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ force_scan: true }),
-      });
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(payload.error || `HTTP ${response.status}`);
-      return payload;
-    }
-
     async function loadData() {
       try {
         const response = await fetchWithFallback(DATA_URL);
@@ -845,31 +833,13 @@
       }
     }
 
-    async function refreshAll({ triggerScan = false } = {}) {
+    async function refreshAll() {
       refreshButton.disabled = true;
       const originalText = refreshButton.textContent;
-      refreshButton.textContent = triggerScan ? "刷新中" : originalText;
+      refreshButton.textContent = "刷新中";
       try {
-        let livePayload = null;
-        if (triggerScan) {
-          try {
-            const payload = await triggerCloudScan();
-            if (Array.isArray(payload.items)) livePayload = payload;
-            message.textContent = payload.message || "已触发云端扫描，结果生成后会自动刷新。";
-          } catch (error) {
-            message.textContent = `触发扫描失败，已改为读取现有数据：${error.message}`;
-          }
-        }
         await Promise.all([loadStatus(), loadWatchlist()]);
-        if (livePayload) {
-          rows = livePayload.items;
-          mergeWatchlistRows();
-          updatedAt.textContent = livePayload.updated_at || "-";
-          message.textContent = livePayload.message || "实时刷新完成。";
-          render();
-        } else {
-          await loadData();
-        }
+        await loadData();
       } finally {
         refreshButton.disabled = false;
         refreshButton.textContent = originalText;
@@ -878,10 +848,10 @@
 
     searchInput.addEventListener("input", render);
     statusFilter.addEventListener("change", render);
-    refreshButton.addEventListener("click", () => refreshAll({ triggerScan: true }));
+    refreshButton.addEventListener("click", refreshAll);
     newGroupButton.addEventListener("click", createGroup);
     saveWatchlistButton.addEventListener("click", saveWatchlist);
-    refreshAll({ triggerScan: true });
+    refreshAll();
     window.setInterval(() => refreshAll(), REFRESH_MS);
     window.setInterval(loadStatus, STATUS_REFRESH_MS);
   </script>
