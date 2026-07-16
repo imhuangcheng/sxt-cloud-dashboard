@@ -1,6 +1,6 @@
 {
-  "updated_at": "2026-07-15 23:50:49",
-  "data_updated_at": "2026-07-15 23:50:49",
+  "updated_at": "2026-07-16 09:29:11",
+  "data_updated_at": "2026-07-16 09:29:11",
   "is_trading_time": false,
   "force_scan": true,
   "message": "Force scan completed with latest available data.",
@@ -10,13 +10,13 @@
       "name": "三全食品",
       "market": "sz",
       "daily_sxt": 2,
-      "minute15_sxt": 2,
-      "status": "ALERT",
-      "last_daily_time": "2026-07-15 00:00:00",
-      "last_15m_time": "2026-07-15 15:00:00",
+      "minute15_sxt": -2,
+      "status": "WATCH",
+      "last_daily_time": "2026-07-16 00:00:00",
+      "last_15m_time": "2026-07-16 09:45:00",
       "error": "",
       "daily_signal": "BUY",
-      "minute15_signal": "BUY"
+      "minute15_signal": "NEGATIVE"
     },
     {
       "code": "002709",
@@ -25,8 +25,8 @@
       "daily_sxt": 0,
       "minute15_sxt": -2,
       "status": "WATCH",
-      "last_daily_time": "2026-07-15 00:00:00",
-      "last_15m_time": "2026-07-15 15:00:00",
+      "last_daily_time": "2026-07-16 00:00:00",
+      "last_15m_time": "2026-07-16 09:45:00",
       "error": "",
       "daily_signal": "NEUTRAL",
       "minute15_signal": "NEGATIVE"
@@ -38,8 +38,8 @@
       "daily_sxt": 0,
       "minute15_sxt": 0,
       "status": "WATCH",
-      "last_daily_time": "2026-07-15 00:00:00",
-      "last_15m_time": "2026-07-15 15:00:00",
+      "last_daily_time": "2026-07-16 00:00:00",
+      "last_15m_time": "2026-07-16 09:45:00",
       "error": "",
       "daily_signal": "NEUTRAL",
       "minute15_signal": "NEUTRAL"
@@ -49,13 +49,13 @@
       "name": "普蕊斯",
       "market": "sz",
       "daily_sxt": 2,
-      "minute15_sxt": -2,
-      "status": "WATCH",
-      "last_daily_time": "2026-07-15 00:00:00",
-      "last_15m_time": "2026-07-15 15:00:00",
+      "minute15_sxt": 2,
+      "status": "ALERT",
+      "last_daily_time": "2026-07-16 00:00:00",
+      "last_15m_time": "2026-07-16 09:45:00",
       "error": "",
       "daily_signal": "BUY",
-      "minute15_signal": "NEGATIVE"
+      "minute15_signal": "BUY"
     },
     {
       "code": "601628",
@@ -64,8 +64,8 @@
       "daily_sxt": 2,
       "minute15_sxt": -2,
       "status": "WATCH",
-      "last_daily_time": "2026-07-15 00:00:00",
-      "last_15m_time": "2026-07-15 15:00:00",
+      "last_daily_time": "2026-07-16 00:00:00",
+      "last_15m_time": "2026-07-16 09:45:00",
       "error": "",
       "daily_signal": "BUY",
       "minute15_signal": "NEGATIVE"
