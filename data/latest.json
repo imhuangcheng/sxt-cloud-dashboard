@@ -1,47 +1,48 @@
 {
-  "updated_at": "2026-08-07 11:42:50",
-  "data_updated_at": "2026-08-05 14:14:39",
-  "is_trading_time": false,
-  "message": "Outside A-share trading sessions, scan skipped.",
+  "updated_at": "2026-08-07 13:23:07",
+  "data_updated_at": "2026-08-07 13:23:07",
+  "is_trading_time": true,
+  "force_scan": false,
+  "message": "Scan completed.",
   "items": [
     {
       "code": "002216",
       "name": "三全食品",
       "market": "sz",
-      "daily_sxt": -2,
-      "minute15_sxt": 2,
+      "daily_sxt": 2,
+      "minute15_sxt": -2,
       "status": "WATCH",
-      "last_daily_time": "2026-08-05 00:00:00",
-      "last_15m_time": "2026-08-05 14:15:00",
+      "last_daily_time": "2026-08-07 00:00:00",
+      "last_15m_time": "2026-08-07 13:30:00",
       "error": "",
-      "daily_signal": "NEGATIVE",
-      "minute15_signal": "BUY"
+      "daily_signal": "BUY",
+      "minute15_signal": "NEGATIVE"
     },
     {
       "code": "002709",
       "name": "天赐材料",
       "market": "sz",
-      "daily_sxt": -2,
-      "minute15_sxt": -2,
-      "status": "WATCH",
-      "last_daily_time": "2026-08-05 00:00:00",
-      "last_15m_time": "2026-08-05 14:15:00",
+      "daily_sxt": 2,
+      "minute15_sxt": 2,
+      "status": "ALERT",
+      "last_daily_time": "2026-08-07 00:00:00",
+      "last_15m_time": "2026-08-07 13:30:00",
       "error": "",
-      "daily_signal": "NEGATIVE",
-      "minute15_signal": "NEGATIVE"
+      "daily_signal": "BUY",
+      "minute15_signal": "BUY"
     },
     {
       "code": "002876",
       "name": "三利谱",
       "market": "sz",
-      "daily_sxt": 2,
-      "minute15_sxt": -2,
+      "daily_sxt": -2,
+      "minute15_sxt": 2,
       "status": "WATCH",
-      "last_daily_time": "2026-08-05 00:00:00",
-      "last_15m_time": "2026-08-05 14:15:00",
+      "last_daily_time": "2026-08-07 00:00:00",
+      "last_15m_time": "2026-08-07 13:30:00",
       "error": "",
-      "daily_signal": "BUY",
-      "minute15_signal": "NEGATIVE"
+      "daily_signal": "NEGATIVE",
+      "minute15_signal": "BUY"
     },
     {
       "code": "301257",
@@ -50,8 +51,8 @@
       "daily_sxt": 0,
       "minute15_sxt": 0,
       "status": "WATCH",
-      "last_daily_time": "2026-08-05 00:00:00",
-      "last_15m_time": "2026-08-05 14:15:00",
+      "last_daily_time": "2026-08-07 00:00:00",
+      "last_15m_time": "2026-08-07 13:30:00",
       "error": "",
       "daily_signal": "NEUTRAL",
       "minute15_signal": "NEUTRAL"
@@ -60,14 +61,14 @@
       "code": "601628",
       "name": "中国人寿",
       "market": "sh",
-      "daily_sxt": -2,
-      "minute15_sxt": 2,
+      "daily_sxt": 2,
+      "minute15_sxt": -2,
       "status": "WATCH",
-      "last_daily_time": "2026-08-05 00:00:00",
-      "last_15m_time": "2026-08-05 14:15:00",
+      "last_daily_time": "2026-08-07 00:00:00",
+      "last_15m_time": "2026-08-07 13:30:00",
       "error": "",
-      "daily_signal": "NEGATIVE",
-      "minute15_signal": "BUY"
+      "daily_signal": "BUY",
+      "minute15_signal": "NEGATIVE"
     }
   ]
 }
